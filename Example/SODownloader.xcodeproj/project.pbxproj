@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09504ED01F398FA2001D5EF6 /* AppDelegate+SODownloader.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504EC01F398FA2001D5EF6 /* AppDelegate+SODownloader.m */; };
+		09504ED11F398FA2001D5EF6 /* SODownloader+MusicDownloader.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504EC21F398FA2001D5EF6 /* SODownloader+MusicDownloader.m */; };
+		09504ED21F398FA2001D5EF6 /* SODownloadSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504EC41F398FA2001D5EF6 /* SODownloadSettingViewController.m */; };
+		09504ED31F398FA2001D5EF6 /* SODownloadViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504EC61F398FA2001D5EF6 /* SODownloadViewController.m */; };
+		09504ED41F398FA2001D5EF6 /* SOMusic.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504EC91F398FA2001D5EF6 /* SOMusic.m */; };
+		09504ED51F398FA2001D5EF6 /* SOMusicListCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504ECB1F398FA2001D5EF6 /* SOMusicListCell.m */; };
+		09504ED61F398FA2001D5EF6 /* SOMusicListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504ECD1F398FA2001D5EF6 /* SOMusicListViewController.m */; };
+		09504ED71F398FA2001D5EF6 /* SOSimpleDownloadViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 09504ECF1F398FA2001D5EF6 /* SOSimpleDownloadViewController.m */; };
 		35086571AECF3C354551D443 /* Pods_SODownloader_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A7123CCEFF6CBDB7B1721E1 /* Pods_SODownloader_Example.framework */; };
 		5063E0F75ED5231781C774D8 /* Pods_SODownloader_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0B7BDCF7D6FBD97D8794C41 /* Pods_SODownloader_Tests.framework */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
@@ -15,7 +23,6 @@
 		6003F598195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F596195388D20070C39A /* InfoPlist.strings */; };
 		6003F59A195388D20070C39A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F599195388D20070C39A /* main.m */; };
 		6003F59E195388D20070C39A /* SOAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F59D195388D20070C39A /* SOAppDelegate.m */; };
-		6003F5A7195388D20070C39A /* SOViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5A6195388D20070C39A /* SOViewController.m */; };
 		6003F5A9195388D20070C39A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5A8195388D20070C39A /* Images.xcassets */; };
 		6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F5AF195388D20070C39A /* XCTest.framework */; };
 		6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
@@ -37,7 +44,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		011DED8213D8AD3B8511FED2 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		011DED8213D8AD3B8511FED2 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		09504EBF1F398FA2001D5EF6 /* AppDelegate+SODownloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "AppDelegate+SODownloader.h"; sourceTree = "<group>"; };
+		09504EC01F398FA2001D5EF6 /* AppDelegate+SODownloader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "AppDelegate+SODownloader.m"; sourceTree = "<group>"; };
+		09504EC11F398FA2001D5EF6 /* SODownloader+MusicDownloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "SODownloader+MusicDownloader.h"; sourceTree = "<group>"; };
+		09504EC21F398FA2001D5EF6 /* SODownloader+MusicDownloader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "SODownloader+MusicDownloader.m"; sourceTree = "<group>"; };
+		09504EC31F398FA2001D5EF6 /* SODownloadSettingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SODownloadSettingViewController.h; sourceTree = "<group>"; };
+		09504EC41F398FA2001D5EF6 /* SODownloadSettingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SODownloadSettingViewController.m; sourceTree = "<group>"; };
+		09504EC51F398FA2001D5EF6 /* SODownloadViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SODownloadViewController.h; sourceTree = "<group>"; };
+		09504EC61F398FA2001D5EF6 /* SODownloadViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SODownloadViewController.m; sourceTree = "<group>"; };
+		09504EC71F398FA2001D5EF6 /* SOLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SOLog.h; sourceTree = "<group>"; };
+		09504EC81F398FA2001D5EF6 /* SOMusic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SOMusic.h; sourceTree = "<group>"; };
+		09504EC91F398FA2001D5EF6 /* SOMusic.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SOMusic.m; sourceTree = "<group>"; };
+		09504ECA1F398FA2001D5EF6 /* SOMusicListCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SOMusicListCell.h; sourceTree = "<group>"; };
+		09504ECB1F398FA2001D5EF6 /* SOMusicListCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SOMusicListCell.m; sourceTree = "<group>"; };
+		09504ECC1F398FA2001D5EF6 /* SOMusicListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SOMusicListViewController.h; sourceTree = "<group>"; };
+		09504ECD1F398FA2001D5EF6 /* SOMusicListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SOMusicListViewController.m; sourceTree = "<group>"; };
+		09504ECE1F398FA2001D5EF6 /* SOSimpleDownloadViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SOSimpleDownloadViewController.h; sourceTree = "<group>"; };
+		09504ECF1F398FA2001D5EF6 /* SOSimpleDownloadViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SOSimpleDownloadViewController.m; sourceTree = "<group>"; };
 		3A7123CCEFF6CBDB7B1721E1 /* Pods_SODownloader_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SODownloader_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58A195388D20070C39A /* SODownloader_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SODownloader_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58D195388D20070C39A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -49,8 +73,6 @@
 		6003F59B195388D20070C39A /* SODownloader-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SODownloader-Prefix.pch"; sourceTree = "<group>"; };
 		6003F59C195388D20070C39A /* SOAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SOAppDelegate.h; sourceTree = "<group>"; };
 		6003F59D195388D20070C39A /* SOAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SOAppDelegate.m; sourceTree = "<group>"; };
-		6003F5A5195388D20070C39A /* SOViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SOViewController.h; sourceTree = "<group>"; };
-		6003F5A6195388D20070C39A /* SOViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SOViewController.m; sourceTree = "<group>"; };
 		6003F5A8195388D20070C39A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6003F5AE195388D20070C39A /* SODownloader_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SODownloader_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F5AF195388D20070C39A /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
@@ -61,11 +83,11 @@
 		6D2B922579E5415A199BCCDF /* Pods-SODownloader_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Tests/Pods-SODownloader_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		AABBBD45C3A602396FE21B84 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		AABBBD45C3A602396FE21B84 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		AFBD5A4520E2B067F40DBF99 /* Pods-SODownloader_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		B0B7BDCF7D6FBD97D8794C41 /* Pods_SODownloader_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SODownloader_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD7D56A8863E003A78B0EF48 /* Pods-SODownloader_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example.release.xcconfig"; sourceTree = "<group>"; };
-		CFB0E5EE6B8F5D4AD4EE7EB6 /* SODownloader.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = SODownloader.podspec; path = ../SODownloader.podspec; sourceTree = "<group>"; };
+		CFB0E5EE6B8F5D4AD4EE7EB6 /* SODownloader.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SODownloader.podspec; path = ../SODownloader.podspec; sourceTree = "<group>"; };
 		EFA4C4CFF217B9321BB9E034 /* Pods-SODownloader_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Tests/Pods-SODownloader_Tests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -95,6 +117,39 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		09504ED81F39A3C4001D5EF6 /* ViewController */ = {
+			isa = PBXGroup;
+			children = (
+				09504ECE1F398FA2001D5EF6 /* SOSimpleDownloadViewController.h */,
+				09504ECF1F398FA2001D5EF6 /* SOSimpleDownloadViewController.m */,
+				09504ECC1F398FA2001D5EF6 /* SOMusicListViewController.h */,
+				09504ECD1F398FA2001D5EF6 /* SOMusicListViewController.m */,
+				09504EC51F398FA2001D5EF6 /* SODownloadViewController.h */,
+				09504EC61F398FA2001D5EF6 /* SODownloadViewController.m */,
+				09504EC31F398FA2001D5EF6 /* SODownloadSettingViewController.h */,
+				09504EC41F398FA2001D5EF6 /* SODownloadSettingViewController.m */,
+			);
+			name = ViewController;
+			sourceTree = "<group>";
+		};
+		09504ED91F39A41A001D5EF6 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				09504ECA1F398FA2001D5EF6 /* SOMusicListCell.h */,
+				09504ECB1F398FA2001D5EF6 /* SOMusicListCell.m */,
+			);
+			name = View;
+			sourceTree = "<group>";
+		};
+		09504EDA1F39A42E001D5EF6 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				09504EC81F398FA2001D5EF6 /* SOMusic.h */,
+				09504EC91F398FA2001D5EF6 /* SOMusic.m */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
 		6003F581195388D10070C39A = {
 			isa = PBXGroup;
 			children = (
@@ -132,11 +187,17 @@
 		6003F593195388D20070C39A /* Example for SODownloader */ = {
 			isa = PBXGroup;
 			children = (
+				09504EDA1F39A42E001D5EF6 /* Model */,
+				09504ED91F39A41A001D5EF6 /* View */,
+				09504ED81F39A3C4001D5EF6 /* ViewController */,
+				09504EC71F398FA2001D5EF6 /* SOLog.h */,
 				6003F59C195388D20070C39A /* SOAppDelegate.h */,
 				6003F59D195388D20070C39A /* SOAppDelegate.m */,
+				09504EBF1F398FA2001D5EF6 /* AppDelegate+SODownloader.h */,
+				09504EC01F398FA2001D5EF6 /* AppDelegate+SODownloader.m */,
+				09504EC11F398FA2001D5EF6 /* SODownloader+MusicDownloader.h */,
+				09504EC21F398FA2001D5EF6 /* SODownloader+MusicDownloader.m */,
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
-				6003F5A5195388D20070C39A /* SOViewController.h */,
-				6003F5A6195388D20070C39A /* SOViewController.m */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -394,9 +455,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09504ED71F398FA2001D5EF6 /* SOSimpleDownloadViewController.m in Sources */,
+				09504ED51F398FA2001D5EF6 /* SOMusicListCell.m in Sources */,
 				6003F59E195388D20070C39A /* SOAppDelegate.m in Sources */,
-				6003F5A7195388D20070C39A /* SOViewController.m in Sources */,
+				09504ED61F398FA2001D5EF6 /* SOMusicListViewController.m in Sources */,
+				09504ED01F398FA2001D5EF6 /* AppDelegate+SODownloader.m in Sources */,
+				09504ED11F398FA2001D5EF6 /* SODownloader+MusicDownloader.m in Sources */,
+				09504ED21F398FA2001D5EF6 /* SODownloadSettingViewController.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
+				09504ED31F398FA2001D5EF6 /* SODownloadViewController.m in Sources */,
+				09504ED41F398FA2001D5EF6 /* SOMusic.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

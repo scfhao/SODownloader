@@ -1,0 +1,6 @@
+framework module SODownloader {
+  umbrella header "SODownloader-umbrella.h"
+
+  export *
+  module * { export * }
+}

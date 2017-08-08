@@ -11,6 +11,8 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 
 ## Requirements
 
+SODownloader base on [AFNetworking 3](https://github.com/AFNetworking/AFNetworking), if you are using AFNetworking 2.x, you should grade your AFNetworking dependency.
+
 ## Installation
 
 SODownloader is available through [CocoaPods](http://cocoapods.org). To install
@@ -27,3 +29,5 @@ scfhao, scfhao@126.com
 ## License
 
 SODownloader is available under the MIT license. See the LICENSE file for more info.
+
+

@@ -1,0 +1,33 @@
+PODS:
+  - AFNetworking (3.1.0):
+    - AFNetworking/NSURLSession (= 3.1.0)
+    - AFNetworking/Reachability (= 3.1.0)
+    - AFNetworking/Security (= 3.1.0)
+    - AFNetworking/Serialization (= 3.1.0)
+    - AFNetworking/UIKit (= 3.1.0)
+  - AFNetworking/NSURLSession (3.1.0):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/Reachability (3.1.0)
+  - AFNetworking/Security (3.1.0)
+  - AFNetworking/Serialization (3.1.0)
+  - AFNetworking/UIKit (3.1.0):
+    - AFNetworking/NSURLSession
+  - SODownloader (0.1.0):
+    - AFNetworking (~> 3.0)
+
+DEPENDENCIES:
+  - SODownloader (from `../`)
+
+EXTERNAL SOURCES:
+  SODownloader:
+    :path: ../
+
+SPEC CHECKSUMS:
+  AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
+  SODownloader: 31709263564b44ddd5bd9de18199eaf942dbe727
+
+PODFILE CHECKSUM: 9e3cf8bca1796c7acb04723cfa55b54cbdd0825f
+
+COCOAPODS: 1.2.0
