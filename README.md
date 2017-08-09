@@ -22,6 +22,10 @@ it, simply add the following line to your Podfile:
 pod "SODownloader"
 ```
 
+## Usage
+
+使用方法可参考[Wiki](https://github.com/scfhao/SODownloader/wiki)
+
 ## Author
 
 scfhao, scfhao@126.com
