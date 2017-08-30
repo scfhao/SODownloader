@@ -48,8 +48,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 - (void)createPath;
 - (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item;
-- (void)removeTempDataForItem:(id<SODownloadItem>)item;
-- (NSData *)tempDataForItem:(id<SODownloadItem>)item;
+- (NSData *)resumeDataForItem:(id<SODownloadItem>)item;
 
 @end
 
@@ -301,7 +300,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
     [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
     [self notifyDownloadItem:item withDownloadProgress:0];
-    [self removeTempDataForItem:item];
     if (remove && [self.downloadMutableArray count]) {
         [self.downloadArrayWarpper removeObject:item];
     }
@@ -450,7 +448,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         return [NSURL fileURLWithPath:destinationPath];
     };
     // 创建task
-    NSData *tempData = [self tempDataForItem:item];
     void (^progressBlock)(NSProgress *downloadProgress) = ^(NSProgress *downloadProgress) {
         __strong __typeof__(weakSelf) strongSelf = weakSelf;
         NSDictionary *progressInfo = downloadProgress.userInfo;
@@ -467,8 +464,9 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         }
         [strongSelf notifyDownloadItem:item withDownloadProgress:downloadProgress.fractionCompleted];
     };
-    if (tempData) {
-        downloadTask = [self.sessionManager downloadTaskWithResumeData:tempData progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
+    NSData *resumeData = [self resumeDataForItem:item];
+    if (resumeData) {
+        downloadTask = [self.sessionManager downloadTaskWithResumeData:resumeData progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
     } else {
         downloadTask = [self.sessionManager downloadTaskWithRequest:request progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
     }
@@ -493,12 +491,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         }
     } else if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
         switch (error.code) {
-            case 2: // can't found tmp file to resume
-                [self removeTempDataForItem:item];
-                [self notifyDownloadItem:item withDownloadProgress:0];
-                [self notifyDownloadItem:item withDownloadState:SODownloadStateWait];
-                handledError = YES;
-                break;
             case 28: // No space left on device
                 NSLog(@"[SODownloader]: There is no space to continue download.");
                 [self _pauseAll];
@@ -573,27 +565,39 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (NSString *)tempPathForItem:(id<SODownloadItem>)item {
-    NSAssert([item so_downloadURL] != nil, @"SODownloader needs downloadURL for download item!");
+- (NSString *)resumePathForItem:(id<SODownloadItem>)item {
     NSString *tempFileName = [[self pathForDownloadURL:[item so_downloadURL]]stringByAppendingPathExtension:@"download"];
     return [self.downloaderPath stringByAppendingPathComponent:tempFileName];
 }
 
-- (void)removeTempDataForItem:(id<SODownloadItem>)item {
-    [[NSFileManager defaultManager]removeItemAtPath:[self tempPathForItem:item] error:nil];
-}
-
 - (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
-    [resumeData writeToFile:[self tempPathForItem:item] atomically:YES];
+    [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
 }
 
-- (NSData *)tempDataForItem:(id<SODownloadItem>)item {
-    NSData *data = [NSData dataWithContentsOfFile:[self tempPathForItem:item]];
-    if ([data length]) {
-        return data;
-    } else {
-        return nil;
+- (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
+    NSString *resumePath = [self resumePathForItem:item];
+    if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
+        NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
+        NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
+        NSString *tempPath = nil;
+        switch (resumeInfoVersion) {
+            case 1:
+                tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
+                break;
+            case 2:
+                tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:resumeInfo[@"NSURLSessionResumeInfoTempFileName"]];
+                break;
+            default:
+                NSLog(@"不支持的 resumeInfoVersion %li, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", resumeInfoVersion);
+                break;
+        }
+        if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
+            NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
+            [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
+            return resumeData;
+        }
     }
+    return nil;
 }
 
 - (NSString *)pathForDownloadURL:(NSURL *)url {
