@@ -19,7 +19,7 @@ static void * kSpeedContext = &kSpeedContext;
     [self updateState:music.so_downloadState];
     self.progressView.progress = music.so_downloadProgress;
     self.music = music;
-    self.backgroundColor = [UIColor whiteColor];
+//    self.backgroundColor = [UIColor whiteColor];
 }
 
 - (void)updateState:(SODownloadState)state {

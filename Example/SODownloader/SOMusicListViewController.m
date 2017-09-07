@@ -25,6 +25,8 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.musicArray = (NSArray<SODownloadItem> *)[SOMusic allMusicList];
+    self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    
     [[SODownloader musicDownloader]addObserver:self forKeyPath:SODownloaderDownloadArrayObserveKeyPath options:NSKeyValueObservingOptionNew context:kDownloaderKVOContext];
     [[SODownloader musicDownloader]addObserver:self forKeyPath:SODownloaderCompleteArrayObserveKeyPath options:NSKeyValueObservingOptionNew context:kDownloaderKVOContext];
 }
@@ -43,7 +45,6 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
 }
 
 #pragma mark - Table view data source
-
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     return [self.musicArray count];
 }
@@ -52,13 +53,16 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
     SOMusic *music = self.musicArray[indexPath.row];
     
     SOMusicListCell *cell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([SOMusicListCell class]) forIndexPath:indexPath];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     [cell configureMusic:music];
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([tableView isEditing]) {
+        return;
+    }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
     SOMusic *music = self.musicArray[indexPath.row];
     switch (music.so_downloadState) {
         case SODownloadStateError:
@@ -97,36 +101,59 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
     [musicCell configureMusic:nil];
 }
 
+/// 多选相关的方法
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+    SOMusic *music = self.musicArray[indexPath.row];
+    // 只有 normal（即没下载过的） 状态的才可以下载
+    return music.so_downloadState == SODownloadStateNormal;
+}
+
 #pragma mark - Actions
-- (IBAction)showActions:(id)sender {
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"请选择操作" preferredStyle:UIAlertControllerStyleActionSheet];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"全部下载" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [[SODownloader musicDownloader]downloadItems:self.musicArray];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"全部暂停" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [[SODownloader musicDownloader]pauseAll];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"全部开始" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [[SODownloader musicDownloader]resumeAll];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"全部取消" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        [[SODownloader musicDownloader]cancenAll];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-        
-    }]];
-    [self presentViewController:alertController animated:YES completion:nil];
+- (void)setEditing:(BOOL)editing animated:(BOOL)animated {
+    if (!editing) {
+        // 多选完成
+        NSArray *selectedIndexPaths = [self.tableView indexPathsForSelectedRows];
+        if ([selectedIndexPaths count]) {
+            NSMutableArray *musicsToDownload = [NSMutableArray arrayWithCapacity:[selectedIndexPaths count]];
+            for (NSIndexPath *indexPath in selectedIndexPaths) {
+                SOMusic *music = self.musicArray[indexPath.row];
+                [musicsToDownload addObject:music];
+            }
+            [[SODownloader musicDownloader]downloadItems:[musicsToDownload copy]];
+        }
+    }
+    [super setEditing:editing animated:animated];
+}
+
+/// 下载全部
+- (IBAction)downloadAll:(UIButton *)sender {
+    [[SODownloader musicDownloader]downloadItems:self.musicArray];
+}
+
+/// 暂停全部
+- (IBAction)pauseAll:(id)sender {
+    [[SODownloader musicDownloader]pauseAll];
+}
+
+/// 继续全部
+- (IBAction)resumeAll:(id)sender {
+    [[SODownloader musicDownloader]resumeAll];
+}
+
+/// 取消全部
+- (IBAction)cancelAll:(id)sender {
+    [[SODownloader musicDownloader]cancenAll];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (context == kDownloaderKVOContext) {
-        if ([keyPath isEqualToString:SODownloaderDownloadArrayObserveKeyPath]) {
-            // 下载列表发生变化
-            SODebugLog(@"下载列表发生变化");
-        } else {
-            // 已下载列表发生变化
-            SODebugLog(@"已下载列表发生变化");
-        }
+        NSInteger kind = [change[NSKeyValueChangeKindKey] integerValue];
+        NSIndexSet * __unused indexSet = change[NSKeyValueChangeIndexesKey];
+        NSArray *news = change[NSKeyValueChangeNewKey];
+        
+        NSString *list = [keyPath isEqualToString:SODownloaderDownloadArrayObserveKeyPath] ? @"下载队列" : @"已下载队列";
+        NSString *type = kind == NSKeyValueChangeInsertion ? @"插入" : @"删除";
+        SODebugLog(@"%@ %@ %@", list, type, news);
     } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12120" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="rnw-Er-tkv">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13168.3" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="rnw-Er-tkv">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13147.4"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -44,7 +44,7 @@
                                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="JJa-PE-FPh" id="5dz-J4-RZS">
-                                            <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="同时进行的下载数" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zqG-5d-HDc">
@@ -80,7 +80,7 @@
                                         <rect key="frame" x="0.0" y="44" width="375" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="OkF-dS-qVC" id="7wM-bF-I5o">
-                                            <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="使用2G/3G/4G网络下载" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RDc-wj-Hir">
@@ -141,7 +141,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="说明" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="hYf-b6-w9I">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -161,7 +161,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="简单下载示例" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="J0E-ea-pDg">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -181,7 +181,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="示例（音乐列表）" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="4T7-hU-wFY">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -201,7 +201,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="示例（已下载列表）" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Aok-0N-Akf">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -221,7 +221,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="示例（下载设置）" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="MFy-Wg-OmN">
-                                                    <rect key="frame" x="15" y="0.0" width="345" height="43.5"/>
+                                                    <rect key="frame" x="16" y="0.0" width="344" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -289,7 +289,7 @@
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="opw-Qg-kCI">
                                 <rect key="frame" x="0.0" y="72" width="375" height="575"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <mutableString key="text">1. 这里是SODownloader示例工程。 2. 如果你的需求比较简单，只下载单个文件，且没有将下载对象封装为模型，请参考本示例代码中的“简单下载示例”，这里示范了如何使用 AFNetworking 下载文件，代码在 SOSimpleDownloadViewController中。 3. 如果涉及到类似本示例中的音乐列表下载的需求，欢迎使用SODownloader 进行下载，SODownloader 在 AFNetworking 3 基础上对下载功能进行了封装，使实现下载功能更加简单！ 4. Demo中的结构及每个类的介绍参考 AppDelegate.h 文件中的注释部分。</mutableString>
+                                <string key="text">1. 这里是SODownloader示例工程。 2. 如果你的需求比较简单，只下载单个文件，且没有将下载对象封装为模型，请参考本示例代码中的“简单下载示例”，这里示范了如何使用 AFNetworking 下载文件，代码在 SOSimpleDownloadViewController中。 3. 如果涉及到类似本示例中的音乐列表下载的需求，欢迎使用SODownloader 进行下载，SODownloader 在 AFNetworking 3 基础上对下载功能进行了封装，使实现下载功能更加简单！ 4. Demo中的结构及每个类的介绍参考 AppDelegate.h 文件中的注释部分。</string>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
@@ -389,26 +389,98 @@
         <scene sceneID="Aek-Wh-jaW">
             <objects>
                 <tableViewController id="brD-90-eQx" customClass="SOMusicListViewController" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="65" sectionHeaderHeight="28" sectionFooterHeight="28" id="LRY-UJ-10d">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" allowsMultipleSelectionDuringEditing="YES" rowHeight="65" sectionHeaderHeight="28" sectionFooterHeight="28" id="LRY-UJ-10d">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <view key="tableHeaderView" contentMode="scaleToFill" id="83P-RA-gHe">
+                            <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <subviews>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8FW-OK-lbJ">
+                                    <rect key="frame" x="8" y="7" width="62" height="30"/>
+                                    <state key="normal" title="全部下载"/>
+                                    <connections>
+                                        <action selector="downloadAll:" destination="brD-90-eQx" eventType="touchUpInside" id="PkZ-e8-jQy"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Yqv-Ev-jEA">
+                                    <rect key="frame" x="208.5" y="7" width="62" height="30"/>
+                                    <state key="normal" title="全部继续"/>
+                                    <connections>
+                                        <action selector="resumeAll:" destination="brD-90-eQx" eventType="touchUpInside" id="1H0-OS-x1z"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sx1-wl-cE0">
+                                    <rect key="frame" x="305" y="7" width="62" height="30"/>
+                                    <state key="normal" title="全部取消"/>
+                                    <connections>
+                                        <action selector="cancelAll:" destination="brD-90-eQx" eventType="touchUpInside" id="hDn-t8-vWR"/>
+                                    </connections>
+                                </button>
+                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6TM-x1-DAQ">
+                                    <rect key="frame" x="78" y="0.0" width="34.5" height="44"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </view>
+                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QE5-cc-BNo">
+                                    <rect key="frame" x="174.5" y="0.0" width="34" height="44"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </view>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HvI-xo-vM7">
+                                    <rect key="frame" x="112.5" y="7" width="62" height="30"/>
+                                    <state key="normal" title="全部暂停"/>
+                                    <connections>
+                                        <action selector="pauseAll:" destination="brD-90-eQx" eventType="touchUpInside" id="IOb-67-h77"/>
+                                    </connections>
+                                </button>
+                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="IjW-ed-oML">
+                                    <rect key="frame" x="270.5" y="0.0" width="34.5" height="44"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </view>
+                            </subviews>
+                            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            <constraints>
+                                <constraint firstItem="sx1-wl-cE0" firstAttribute="centerY" secondItem="83P-RA-gHe" secondAttribute="centerY" id="3Jp-QR-4c5"/>
+                                <constraint firstItem="HvI-xo-vM7" firstAttribute="leading" secondItem="6TM-x1-DAQ" secondAttribute="trailing" id="5mu-hz-D7R"/>
+                                <constraint firstItem="IjW-ed-oML" firstAttribute="top" secondItem="83P-RA-gHe" secondAttribute="top" id="Djb-Lk-fa3"/>
+                                <constraint firstAttribute="bottom" secondItem="6TM-x1-DAQ" secondAttribute="bottom" id="GvK-Wd-pYu"/>
+                                <constraint firstItem="IjW-ed-oML" firstAttribute="width" secondItem="6TM-x1-DAQ" secondAttribute="width" id="I1m-k9-xJ7"/>
+                                <constraint firstItem="Yqv-Ev-jEA" firstAttribute="leading" secondItem="QE5-cc-BNo" secondAttribute="trailing" id="Jt5-2I-MK6"/>
+                                <constraint firstItem="8FW-OK-lbJ" firstAttribute="leading" secondItem="83P-RA-gHe" secondAttribute="leading" constant="8" id="Nc0-90-OZy"/>
+                                <constraint firstItem="8FW-OK-lbJ" firstAttribute="centerY" secondItem="83P-RA-gHe" secondAttribute="centerY" id="O9e-Sn-2Dc"/>
+                                <constraint firstItem="QE5-cc-BNo" firstAttribute="width" secondItem="6TM-x1-DAQ" secondAttribute="width" id="TF0-wf-Cwn"/>
+                                <constraint firstAttribute="bottom" secondItem="IjW-ed-oML" secondAttribute="bottom" id="Ukh-Cm-xl5"/>
+                                <constraint firstItem="IjW-ed-oML" firstAttribute="leading" secondItem="Yqv-Ev-jEA" secondAttribute="trailing" id="bJZ-Zy-9Qw"/>
+                                <constraint firstItem="sx1-wl-cE0" firstAttribute="leading" secondItem="IjW-ed-oML" secondAttribute="trailing" id="dmZ-Ft-oif"/>
+                                <constraint firstItem="Yqv-Ev-jEA" firstAttribute="centerY" secondItem="83P-RA-gHe" secondAttribute="centerY" id="jIm-pg-x7P"/>
+                                <constraint firstAttribute="trailing" secondItem="sx1-wl-cE0" secondAttribute="trailing" constant="8" id="jnB-gJ-cvN"/>
+                                <constraint firstItem="QE5-cc-BNo" firstAttribute="top" secondItem="83P-RA-gHe" secondAttribute="top" id="kqD-e7-47a"/>
+                                <constraint firstItem="HvI-xo-vM7" firstAttribute="centerY" secondItem="83P-RA-gHe" secondAttribute="centerY" id="l9b-xY-CZ9"/>
+                                <constraint firstItem="6TM-x1-DAQ" firstAttribute="leading" secondItem="8FW-OK-lbJ" secondAttribute="trailing" constant="8" id="mZW-dh-daE"/>
+                                <constraint firstItem="QE5-cc-BNo" firstAttribute="leading" secondItem="HvI-xo-vM7" secondAttribute="trailing" id="oiN-jj-DjX"/>
+                                <constraint firstAttribute="bottom" secondItem="QE5-cc-BNo" secondAttribute="bottom" id="wkC-4V-Xgq"/>
+                                <constraint firstItem="6TM-x1-DAQ" firstAttribute="top" secondItem="83P-RA-gHe" secondAttribute="top" id="yh7-VE-VdW"/>
+                            </constraints>
+                        </view>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="SOMusicListCell" rowHeight="65" id="ZR4-Dl-EvT" customClass="SOMusicListCell">
-                                <rect key="frame" x="0.0" y="28" width="375" height="65"/>
+                                <rect key="frame" x="0.0" y="72" width="375" height="65"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="ZR4-Dl-EvT" id="k6h-C5-brz">
-                                    <rect key="frame" x="0.0" y="0.0" width="375" height="65"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="64.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" verticalHuggingPriority="252" text="宝贝" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Rsj-zU-x1q">
-                                            <rect key="frame" x="8" y="8" width="307" height="21"/>
+                                            <rect key="frame" x="8" y="8" width="308" height="21"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="下载中" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mUl-ZM-7Zj">
                                             <rect key="frame" x="8" y="36" width="52" height="21"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="52" id="ETE-1B-909"/>
+                                            </constraints>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <nil key="highlightedColor"/>
@@ -417,7 +489,7 @@
                                             <rect key="frame" x="67" y="46" width="300" height="2"/>
                                         </progressView>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" horizontalCompressionResistancePriority="751" text="5kb/s" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="OhI-Sb-wOM">
-                                            <rect key="frame" x="323" y="8" width="44" height="21"/>
+                                            <rect key="frame" x="324" y="8" width="43" height="21"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
@@ -456,13 +528,7 @@
                             <outlet property="delegate" destination="brD-90-eQx" id="kHZ-tN-8Gi"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="下载列表" id="AfM-lh-EHJ">
-                        <barButtonItem key="rightBarButtonItem" systemItem="action" id="zdw-Rv-Viy">
-                            <connections>
-                                <action selector="showActions:" destination="brD-90-eQx" id="8s1-55-caa"/>
-                            </connections>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" title="下载列表" id="AfM-lh-EHJ"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dS7-3z-mdU" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
