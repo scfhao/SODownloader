@@ -105,18 +105,28 @@
 }
 
 #pragma mark - SODownloadItem建议实现的方法
+/**
+ 实现下面这两个方法用于判断两个对象相等。这两个方法一般不会被直接调用，而是间接的调用，比如在集合（NSArray、NSSet等）中的相关方法（比如indexOfObject、containsObject等）中被间接调用。
+ */
 - (BOOL)isEqual:(id)object {
-    if ([object isKindOfClass:[SOMusic class]]) {
+    if (![object isKindOfClass:[SOMusic class]]) {
         return [super isEqual:object];
     }
+    // 如果self和object代表同一个对象，比如这两个对象内存地址不同，但是所有的属性值都相等，对于 SODownloader 来说，就是下载地址相同时返回 YES，否则返回 NO。
     SOMusic *music = (SOMusic *)object;
     return self.index == music.index;
 }
 
+/**
+ 为相等的对象返回相同的hash值，为不相等的对象返回不同的hash值。
+ */
 - (NSUInteger)hash {
     return [@(self.index) hash];
 }
 
+/**
+ 这个方法和下载没关系，当你在打印一个对象的时候，打印出来的是一个对象的类名和内存地址，没有可读性。实现了这个方法后，当用%@形式打印一个对象，或者用 po 调试命令打印对象时，打印出来的就不再是指针，而是你的 description 方法返回的字符串，这样你就可以知道你的对象的内容。
+ */
 - (NSString *)description {
     return [NSString stringWithFormat:@"[Music:%@]", @(self.index).stringValue];
 }

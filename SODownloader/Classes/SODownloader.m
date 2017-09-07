@@ -588,7 +588,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
                 tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:resumeInfo[@"NSURLSessionResumeInfoTempFileName"]];
                 break;
             default:
-                NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion));
+                NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
                 break;
         }
         if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
