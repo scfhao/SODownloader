@@ -351,8 +351,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     dispatch_sync(self.synchronizationQueue, ^{
         NSMutableArray *itemsToMarkComplete = [[NSMutableArray alloc]initWithCapacity:items.count];
         for (id<SODownloadItem>item in items) {
-            if (![self.completeMutableArray containsObject:item]) {
-                [self _cancelItem:item remove:NO];
+            if (![self isControlDownloadFlowForItem:item]) {
                 [self notifyDownloadItem:item withDownloadProgress:1];
                 [self notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
                 [itemsToMarkComplete addObject:item];
