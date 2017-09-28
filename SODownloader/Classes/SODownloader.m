@@ -573,6 +573,12 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
 }
 
+/*
+ NSURLSessionResumeInfoVersion 与 iOS 版本对应
+ 1 ----------- iOS 7
+ 2 ----------- iOS 8、iOS 9、iOS 10
+ 4 ----------- iOS 11
+ */
 - (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
     NSString *resumePath = [self resumePathForItem:item];
     if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
@@ -583,18 +589,30 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
             case 1:
                 tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
                 break;
-            case 2:
-                tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:resumeInfo[@"NSURLSessionResumeInfoTempFileName"]];
-                break;
             default:
-                NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
+            {
+                NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
+                if (tempFileName) {
+                    tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
+                } else {
+                    NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
+                }
+            }
                 break;
         }
         if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
             NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
             [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
             return resumeData;
+        } else {
+#ifdef DEBUG
+            NSLog(@"没有找到文件：%@", tempPath);
+#endif
         }
+    } else {
+#ifdef DEBUG
+        NSLog(@"没有找到文件：%@", resumePath);
+#endif
     }
     return nil;
 }
