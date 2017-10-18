@@ -64,6 +64,46 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  */
 - (instancetype)initWithIdentifier:(NSString *)identifier timeoutInterval:(NSTimeInterval)timeoutInterval completeBlock:(SODownloadCompleteBlock_t)completeBlock;
 
+/**
+ 对象置换：
+ 在应用中同一条数据可能会有多份对象(比如已完成列表中已有一个代表同一项目的对象，然后在某一列表界面从网络获取到一个文件列表)，这时可能会需要获取SODownloader中的那个具备正确下载状态的对象。
+ */
+- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter;
+
+/**
+ 错误处理。
+ 由于下载这项功能的特殊性，如果下载失败，解救的手段有限。SODownloader将下载失败的情况分为两类：
+ 1. 可以重新下载。对于这种情况，SODownloader会自动重新下载该下载项。
+ 2. 无法重新下载。例如远程资源根本不存在，重新下载也是白忙。
+ 3. 其他错误也可以归类到1或2中，如遇到可以继续下载的其他错误，可以在 https://github.com/scfhao/SODownloader/issues 提出。
+ 将autoCancelFailedItem 属性置为YES时（默认为NO），当一个下载项下载失败且SODownloader无法处理时，自动取消下载该下载项，下载项的下载状态将被置为Normal；默认情况下（此属性为NO时），下载状态被置为Error，下载项的so_downloadError属性将被赋值。
+ */
+@property (nonatomic, assign) BOOL autoCancelFailedItem;
+
+@property (nonatomic, assign) BOOL allowsCellularAccess;
+
+#pragma mark - 后台下载支持
+- (void)setDidFinishEventsForBackgroundURLSessionBlock:(void (^)(NSURLSession *session))block;
+
+#pragma mark - HTTP 定制
+/**
+ 下载文件接受类型
+ 此属性默认为nil，可接收任意类型的文件。
+ 可以为此属性设置一个可接收类型集合，当下载文件的response中的MIME-Type不符合时，SODownloader将判定其下载失败。
+ */
+@property (nonatomic, copy, nullable) NSSet <NSString *> *acceptableContentTypes;
+
+/**
+ @brief 设置下载请求使用的 HTTP Header。
+ @description 需要时，可以使用此方法设置 HTTP Header，比如设置 User-Agent，或其他 Header。
+ */
+- (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field;
+
+@end
+
+/// 下载管理相关
+@interface SODownloader (DownloadControl)
+
 #pragma mark - 下载管理
 /**
  @brief 将 item 加入下载列表
@@ -116,41 +156,6 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
 
 /// 判断该item是否在当前的downloader对象的下载列表或完成列表中
 - (BOOL)isControlDownloadFlowForItem:(id<SODownloadItem>)item;
-
-/**
- 对象置换：
- 在应用中同一条数据可能会有多份对象(比如已完成列表中已有一个代表同一项目的对象，然后在某一列表界面从网络获取到一个文件列表)，这时可能会需要获取SODownloader中的那个具备正确下载状态的对象。
- */
-- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter;
-
-/**
- 错误处理。
- 由于下载这项功能的特殊性，如果下载失败，解救的手段有限。SODownloader将下载失败的情况分为两类：
- 1. 可以重新下载。对于这种情况，SODownloader会自动重新下载该下载项。
- 2. 无法重新下载。例如远程资源根本不存在，重新下载也是白忙。
- 3. 其他错误也可以归类到1或2中，如遇到可以继续下载的其他错误，可以在 https://github.com/scfhao/SODownloader/issues 提出。
- 将autoCancelFailedItem 属性置为YES时（默认为NO），当一个下载项下载失败且SODownloader无法处理时，自动取消下载该下载项，下载项的下载状态将被置为Normal；默认情况下（此属性为NO时），下载状态被置为Error，下载项的so_downloadError属性将被赋值。
- */
-@property (nonatomic, assign) BOOL autoCancelFailedItem;
-
-@property (nonatomic, assign) BOOL allowsCellularAccess;
-
-#pragma mark - 后台下载支持
-- (void)setDidFinishEventsForBackgroundURLSessionBlock:(void (^)(NSURLSession *session))block;
-
-#pragma mark - HTTP 定制
-/**
- 下载文件接受类型
- 此属性默认为nil，可接收任意类型的文件。
- 可以为此属性设置一个可接收类型集合，当下载文件的response中的MIME-Type不符合时，SODownloader将判定其下载失败。
- */
-@property (nonatomic, copy, nullable) NSSet <NSString *> *acceptableContentTypes;
-
-/**
- @brief 设置下载请求使用的 HTTP Header。
- @description 需要时，可以使用此方法设置 HTTP Header，比如设置 User-Agent，或其他 Header。
- */
-- (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field;
 
 @end
 

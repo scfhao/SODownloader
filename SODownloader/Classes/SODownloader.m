@@ -19,6 +19,30 @@ NSString * const SODownloaderCompleteArrayObserveKeyPath = @"completeMutableArra
 static NSString * SODownloadProgressUserInfoStartTimeKey = @"SODownloadProgressUserInfoStartTime";
 static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgressUserInfoStartOffsetKey";
 
+@interface SODownloader (DownloadPath)
+
+- (void)createPath;
+- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item;
+- (NSData *)resumeDataForItem:(id<SODownloadItem>)item;
+
+@end
+
+@interface SODownloader (DownloadNotify)
+
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress;
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState;
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed;
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error;
+
+@end
+
+@interface SODownloader (_DownloadControl)
+
+- (void)_pauseAll;
+- (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove;
+
+@end
+
 @interface SODownloader ()
 
 /// downloader identifier
@@ -41,23 +65,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 @property (nonatomic, strong) NSString *downloaderPath;
 // complete block
 @property (nonatomic, copy) SODownloadCompleteBlock_t completeBlock;
-
-@end
-
-@interface SODownloader (DownloadPath)
-
-- (void)createPath;
-- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item;
-- (NSData *)resumeDataForItem:(id<SODownloadItem>)item;
-
-@end
-
-@interface SODownloader (DownloadNotify)
-
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error;
 
 @end
 
@@ -149,6 +156,190 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         [self startNextTaskIfNecessary];
     });
 }
+
+- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter {
+    if (!filter) { return nil; }
+    __block id<SODownloadItem> item = nil;
+    [self.downloadArrayWarpper enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (filter(obj)) {
+            item = obj;
+            *stop = YES;
+        }
+    }];
+    if (item == nil) {
+        [self.completeArrayWarpper enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (filter(obj)) {
+                item = obj;
+                *stop = YES;
+            }
+        }];
+    }
+    return item;
+}
+
+#pragma mark - 下载处理
+/// 开始下载一个item，这个方法必须在同步线程中调用，且调用前必须先判断是否可以开始新的下载
+- (void)startDownloadItem:(id<SODownloadItem>)item {
+    [self notifyDownloadItem:item withDownloadState:SODownloadStateLoading];
+    NSString *URLIdentifier = [item.so_downloadURL absoluteString];
+    
+    NSURLSessionDownloadTask *existingDownloadTask = self.tasks[URLIdentifier];
+    if (existingDownloadTask) {
+        return ;
+    }
+    NSURLSessionDownloadTask *downloadTask = nil;
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URLIdentifier]];
+    if (!request) {
+        NSError *URLError = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorBadURL userInfo:nil];
+        NSLog(@"SODownload fail %@", URLError);
+        [self notifyDownloadItem:item withDownloadError:URLError];
+        [self notifyDownloadItem:item withDownloadState:SODownloadStateError];
+        [self startNextTaskIfNecessary];
+        return;
+    }
+    
+    __weak __typeof__(self) weakSelf = self;
+    UIApplication *application = [UIApplication sharedApplication];
+    __block UIBackgroundTaskIdentifier taskId = [application beginBackgroundTaskWithExpirationHandler:^{
+        [application endBackgroundTask:taskId];
+        taskId = UIBackgroundTaskInvalid;
+    }];
+    // 创建下载完成的回调
+    void (^completeBlock)(NSURLResponse *response, NSURL *filePath, NSError *error) = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+        __strong __typeof__(weakSelf) strongSelf = weakSelf;
+        dispatch_sync(self.synchronizationQueue, ^{
+            if (error) {
+                [strongSelf handleError:error forItem:item];
+            } else {
+                if (strongSelf.completeBlock == nil) {
+                    [strongSelf.downloadArrayWarpper removeObject:item];
+                    [strongSelf.completeArrayWarpper addObject:item];
+                    [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
+                } else {
+                    [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateProcess];
+                    NSError *processError = strongSelf.completeBlock(strongSelf, item, filePath);
+                    if (processError) {
+                        [strongSelf handleError:processError forItem:item];
+                    } else {
+                        [strongSelf.downloadArrayWarpper removeObject:item];
+                        [strongSelf.completeArrayWarpper addObject:item];
+                        [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
+                    }
+                }
+            }
+            [strongSelf removeTaskInfoForItem:item];
+            [strongSelf startNextTaskIfNecessary];
+        });
+    };
+    NSURL *(^destinationBlock)(NSURL *targetPath, NSURLResponse *response) = ^(NSURL *targetPath, NSURLResponse *response) {
+        NSString *fileName = [targetPath lastPathComponent];
+        NSString *destinationPath = [weakSelf.downloaderPath stringByAppendingPathComponent:fileName];
+        return [NSURL fileURLWithPath:destinationPath];
+    };
+    // 创建task
+    void (^progressBlock)(NSProgress *downloadProgress) = ^(NSProgress *downloadProgress) {
+        __strong __typeof__(weakSelf) strongSelf = weakSelf;
+        NSDictionary *progressInfo = downloadProgress.userInfo;
+        NSNumber *startTimeValue = progressInfo[SODownloadProgressUserInfoStartTimeKey];
+        NSNumber *startOffsetValue = progressInfo[SODownloadProgressUserInfoStartOffsetKey];
+        if (startTimeValue) {
+            CFAbsoluteTime startTime = [startTimeValue doubleValue];
+            int64_t startOffset = [startOffsetValue longLongValue];
+            NSInteger downloadSpeed = (NSInteger)((downloadProgress.completedUnitCount - startOffset) / (CFAbsoluteTimeGetCurrent() - startTime));
+            [strongSelf notifyDownloadItem:item withDownloadSpeed:downloadSpeed];
+        } else {
+            [downloadProgress setUserInfoObject:@(CFAbsoluteTimeGetCurrent()) forKey:SODownloadProgressUserInfoStartTimeKey];
+            [downloadProgress setUserInfoObject:@(downloadProgress.completedUnitCount) forKey:SODownloadProgressUserInfoStartOffsetKey];
+        }
+        [strongSelf notifyDownloadItem:item withDownloadProgress:downloadProgress.fractionCompleted];
+    };
+    NSData *resumeData = [self resumeDataForItem:item];
+    if (resumeData) {
+        downloadTask = [self.sessionManager downloadTaskWithResumeData:resumeData progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
+    } else {
+        downloadTask = [self.sessionManager downloadTaskWithRequest:request progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
+    }
+    [self startDownloadTask:downloadTask forItem:item];
+    if (taskId != UIBackgroundTaskInvalid) {
+        [application endBackgroundTask:taskId];
+        taskId = UIBackgroundTaskInvalid;
+    }
+}
+
+- (void)handleError:(NSError *)error forItem:(id<SODownloadItem>)item {
+    // 取消的情况在task cancel方法时处理，所以这里只需处理非取消的情况。
+    BOOL handledError = NO;
+    if ([error.domain isEqualToString:NSURLErrorDomain]) {
+        // handle URL error
+        switch (error.code) {
+            case NSURLErrorCancelled:
+                handledError = YES;
+                break;
+            default:
+                break;
+        }
+    } else if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
+        switch (error.code) {
+            case 28: // No space left on device
+                NSLog(@"[SODownloader]: There is no space to continue download.");
+                [self _pauseAll];
+                [[NSNotificationCenter defaultCenter]postNotificationName:SODownloaderNoDiskSpaceNotification object:self];
+                break;
+            default:
+                break;
+        }
+    }
+    if (!handledError) {
+        if (self.autoCancelFailedItem) {
+            [self _cancelItem:item remove:NO];
+        } else {
+            // 如果有临时文件，保存文件
+            NSData *resumeData = error.userInfo[NSURLSessionDownloadTaskResumeData];
+            if (resumeData) {
+                [self saveResumeData:resumeData forItem:item];
+            }
+            [self notifyDownloadItem:item withDownloadError:error];
+            [self notifyDownloadItem:item withDownloadState:SODownloadStateError];
+        }
+    }
+}
+
+#pragma mark - 同时下载数支持
+- (void)startDownloadTask:(NSURLSessionDownloadTask *)downloadTask forItem:(id<SODownloadItem>)item {
+    self.tasks[[item.so_downloadURL absoluteString]] = downloadTask;
+    [downloadTask resume];
+    ++self.activeRequestCount;
+}
+
+- (NSURLSessionDownloadTask *)downloadTaskForItem:(id<SODownloadItem>)item {
+    return self.tasks[[item.so_downloadURL absoluteString]];
+}
+
+- (void)removeTaskInfoForItem:(id<SODownloadItem>)item {
+    [self.tasks removeObjectForKey:[item.so_downloadURL absoluteString]];
+    --self.activeRequestCount;
+}
+
+/// 尝试开始更多下载，需要在同步队列中执行
+- (void)startNextTaskIfNecessary {
+    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
+        if ([self isActiveRequestCountBelowMaximumLimit]) {
+            if (item.so_downloadState == SODownloadStateWait) {
+                [self startDownloadItem:item];
+            }
+        } else {
+            break;
+        }
+    }
+}
+
+- (BOOL)isActiveRequestCountBelowMaximumLimit {
+    return self.activeRequestCount < self.maximumActiveDownloads;
+}
+
+@end
+
+@implementation SODownloader (DownloadControl)
 
 #pragma mark - Public APIs - Download Control
 /// 下载
@@ -365,186 +556,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 /// 判断item是否在当前的downloader的控制下，用于条件判断
 - (BOOL)isControlDownloadFlowForItem:(id<SODownloadItem>)item {
     return [self.downloadMutableArray containsObject:item] || [self.completeMutableArray containsObject:item];
-}
-
-- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter {
-    if (!filter) { return nil; }
-    __block id<SODownloadItem> item = nil;
-    [self.downloadArrayWarpper enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (filter(obj)) {
-            item = obj;
-            *stop = YES;
-        }
-    }];
-    if (item == nil) {
-        [self.completeArrayWarpper enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (filter(obj)) {
-                item = obj;
-                *stop = YES;
-            }
-        }];
-    }
-    return item;
-}
-
-#pragma mark - 下载处理
-/// 开始下载一个item，这个方法必须在同步线程中调用，且调用前必须先判断是否可以开始新的下载
-- (void)startDownloadItem:(id<SODownloadItem>)item {
-    [self notifyDownloadItem:item withDownloadState:SODownloadStateLoading];
-    NSString *URLIdentifier = [item.so_downloadURL absoluteString];
-    
-    NSURLSessionDownloadTask *existingDownloadTask = self.tasks[URLIdentifier];
-    if (existingDownloadTask) {
-        return ;
-    }
-    NSURLSessionDownloadTask *downloadTask = nil;
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URLIdentifier]];
-    if (!request) {
-        NSError *URLError = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorBadURL userInfo:nil];
-        NSLog(@"SODownload fail %@", URLError);
-        [self notifyDownloadItem:item withDownloadError:URLError];
-        [self notifyDownloadItem:item withDownloadState:SODownloadStateError];
-        [self startNextTaskIfNecessary];
-        return;
-    }
-    
-    __weak __typeof__(self) weakSelf = self;
-    UIApplication *application = [UIApplication sharedApplication];
-    __block UIBackgroundTaskIdentifier taskId = [application beginBackgroundTaskWithExpirationHandler:^{
-        [application endBackgroundTask:taskId];
-        taskId = UIBackgroundTaskInvalid;
-    }];
-    // 创建下载完成的回调
-    void (^completeBlock)(NSURLResponse *response, NSURL *filePath, NSError *error) = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-        __strong __typeof__(weakSelf) strongSelf = weakSelf;
-        dispatch_sync(self.synchronizationQueue, ^{
-            if (error) {
-                [strongSelf handleError:error forItem:item];
-            } else {
-                if (strongSelf.completeBlock == nil) {
-                    [strongSelf.downloadArrayWarpper removeObject:item];
-                    [strongSelf.completeArrayWarpper addObject:item];
-                    [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
-                } else {
-                    [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateProcess];
-                    NSError *processError = strongSelf.completeBlock(strongSelf, item, filePath);
-                    if (processError) {
-                        [strongSelf handleError:processError forItem:item];
-                    } else {
-                        [strongSelf.downloadArrayWarpper removeObject:item];
-                        [strongSelf.completeArrayWarpper addObject:item];
-                        [strongSelf notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
-                    }
-                }
-            }
-            [strongSelf removeTaskInfoForItem:item];
-            [strongSelf startNextTaskIfNecessary];
-        });
-    };
-    NSURL *(^destinationBlock)(NSURL *targetPath, NSURLResponse *response) = ^(NSURL *targetPath, NSURLResponse *response) {
-        NSString *fileName = [targetPath lastPathComponent];
-        NSString *destinationPath = [weakSelf.downloaderPath stringByAppendingPathComponent:fileName];
-        return [NSURL fileURLWithPath:destinationPath];
-    };
-    // 创建task
-    void (^progressBlock)(NSProgress *downloadProgress) = ^(NSProgress *downloadProgress) {
-        __strong __typeof__(weakSelf) strongSelf = weakSelf;
-        NSDictionary *progressInfo = downloadProgress.userInfo;
-        NSNumber *startTimeValue = progressInfo[SODownloadProgressUserInfoStartTimeKey];
-        NSNumber *startOffsetValue = progressInfo[SODownloadProgressUserInfoStartOffsetKey];
-        if (startTimeValue) {
-            CFAbsoluteTime startTime = [startTimeValue doubleValue];
-            int64_t startOffset = [startOffsetValue longLongValue];
-            NSInteger downloadSpeed = (NSInteger)((downloadProgress.completedUnitCount - startOffset) / (CFAbsoluteTimeGetCurrent() - startTime));
-            [strongSelf notifyDownloadItem:item withDownloadSpeed:downloadSpeed];
-        } else {
-            [downloadProgress setUserInfoObject:@(CFAbsoluteTimeGetCurrent()) forKey:SODownloadProgressUserInfoStartTimeKey];
-            [downloadProgress setUserInfoObject:@(downloadProgress.completedUnitCount) forKey:SODownloadProgressUserInfoStartOffsetKey];
-        }
-        [strongSelf notifyDownloadItem:item withDownloadProgress:downloadProgress.fractionCompleted];
-    };
-    NSData *resumeData = [self resumeDataForItem:item];
-    if (resumeData) {
-        downloadTask = [self.sessionManager downloadTaskWithResumeData:resumeData progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
-    } else {
-        downloadTask = [self.sessionManager downloadTaskWithRequest:request progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
-    }
-    [self startDownloadTask:downloadTask forItem:item];
-    if (taskId != UIBackgroundTaskInvalid) {
-        [application endBackgroundTask:taskId];
-        taskId = UIBackgroundTaskInvalid;
-    }
-}
-
-- (void)handleError:(NSError *)error forItem:(id<SODownloadItem>)item {
-    // 取消的情况在task cancel方法时处理，所以这里只需处理非取消的情况。
-    BOOL handledError = NO;
-    if ([error.domain isEqualToString:NSURLErrorDomain]) {
-        // handle URL error
-        switch (error.code) {
-            case NSURLErrorCancelled:
-                handledError = YES;
-                break;
-            default:
-                break;
-        }
-    } else if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
-        switch (error.code) {
-            case 28: // No space left on device
-                NSLog(@"[SODownloader]: There is no space to continue download.");
-                [self _pauseAll];
-                [[NSNotificationCenter defaultCenter]postNotificationName:SODownloaderNoDiskSpaceNotification object:self];
-                break;
-            default:
-                break;
-        }
-    }
-    if (!handledError) {
-        if (self.autoCancelFailedItem) {
-            [self _cancelItem:item remove:NO];
-        } else {
-            // 如果有临时文件，保存文件
-            NSData *resumeData = error.userInfo[NSURLSessionDownloadTaskResumeData];
-            if (resumeData) {
-                [self saveResumeData:resumeData forItem:item];
-            }
-            [self notifyDownloadItem:item withDownloadError:error];
-            [self notifyDownloadItem:item withDownloadState:SODownloadStateError];
-        }
-    }
-}
-
-#pragma mark - 同时下载数支持
-- (void)startDownloadTask:(NSURLSessionDownloadTask *)downloadTask forItem:(id<SODownloadItem>)item {
-    self.tasks[[item.so_downloadURL absoluteString]] = downloadTask;
-    [downloadTask resume];
-    ++self.activeRequestCount;
-}
-
-- (NSURLSessionDownloadTask *)downloadTaskForItem:(id<SODownloadItem>)item {
-    return self.tasks[[item.so_downloadURL absoluteString]];
-}
-
-- (void)removeTaskInfoForItem:(id<SODownloadItem>)item {
-    [self.tasks removeObjectForKey:[item.so_downloadURL absoluteString]];
-    --self.activeRequestCount;
-}
-
-/// 尝试开始更多下载，需要在同步队列中执行
-- (void)startNextTaskIfNecessary {
-    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
-        if ([self isActiveRequestCountBelowMaximumLimit]) {
-            if (item.so_downloadState == SODownloadStateWait) {
-                [self startDownloadItem:item];
-            }
-        } else {
-            break;
-        }
-    }
-}
-
-- (BOOL)isActiveRequestCountBelowMaximumLimit {
-    return self.activeRequestCount < self.maximumActiveDownloads;
 }
 
 @end
