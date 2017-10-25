@@ -106,8 +106,14 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         
         [self createPath];
         _maximumActiveDownloads = 3;
+        
+        [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
 }
 
 - (NSMutableArray *)downloadArrayWarpper {
@@ -339,9 +345,121 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 @end
 
-@implementation SODownloader (DownloadControl)
+@implementation SODownloader (DownloadPath)
 
-#pragma mark - Public APIs - Download Control
+- (void)createPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDir = NO;
+    BOOL exist = [fileManager fileExistsAtPath:self.downloaderPath isDirectory:&isDir];
+    if (!exist || !isDir) {
+        NSError *error;
+        [fileManager createDirectoryAtPath:self.downloaderPath withIntermediateDirectories:YES attributes:nil error:&error];
+        if (error) {
+            NSLog(@"SODownloader create downloaderPath fail!");
+        }
+    }
+}
+
+- (NSString *)resumePathForItem:(id<SODownloadItem>)item {
+    NSString *tempFileName = [[self pathForDownloadURL:[item so_downloadURL]]stringByAppendingPathExtension:@"download"];
+    return [self.downloaderPath stringByAppendingPathComponent:tempFileName];
+}
+
+- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
+    [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
+}
+
+/*
+ NSURLSessionResumeInfoVersion 与 iOS 版本对应
+ 1 ----------- iOS 7
+ 2 ----------- iOS 8、iOS 9、iOS 10
+ 4 ----------- iOS 11
+ */
+- (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
+    NSString *resumePath = [self resumePathForItem:item];
+    if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
+        NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
+        NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
+        NSString *tempPath = nil;
+        switch (resumeInfoVersion) {
+            case 1:
+                tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
+                break;
+            default:
+            {
+                NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
+                if (tempFileName) {
+                    tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
+                } else {
+                    NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
+                }
+            }
+                break;
+        }
+        if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
+            NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
+            [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
+            return resumeData;
+        } else {
+#ifdef DEBUG
+            NSLog(@"没有找到文件：%@", tempPath);
+#endif
+        }
+    } else {
+#ifdef DEBUG
+        NSLog(@"没有找到文件：%@", resumePath);
+#endif
+    }
+    return nil;
+}
+
+- (NSString *)pathForDownloadURL:(NSURL *)url {
+    NSData *data = [[url absoluteString] dataUsingEncoding:NSUTF8StringEncoding];
+    uint8_t digest[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(data.bytes, (CC_LONG)data.length, digest);
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+        [output appendFormat:@"%02x", digest[i]];
+    }
+    return [output copy];
+}
+ 
+@end
+
+@implementation SODownloader (DownloadNotify)
+
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState {
+    if ([item respondsToSelector:@selector(setSo_downloadState:)]) {
+        item.so_downloadState = downloadState;
+    } else {
+        NSLog(@"下载模型必须实现setDownloadState:才能获取到正确的下载状态！");
+    }
+}
+
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress {
+    if ([item respondsToSelector:@selector(setSo_downloadProgress:)]) {
+        item.so_downloadProgress = downloadProgress;
+    } else {
+        NSLog(@"下载模型必须实现setDownloadProgress:才能获取到正确的下载进度！");
+    }
+}
+
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error {
+    if ([item respondsToSelector:@selector(setSo_downloadError:)]) {
+        item.so_downloadError = error;
+    }
+}
+
+- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed {
+    if ([item respondsToSelector:@selector(setSo_downloadSpeed:)]) {
+        item.so_downloadSpeed = downloadSpeed;
+    }
+}
+
+@end
+
+#pragma mark - Download Control
+@implementation SODownloader (DownloadControl)
 /// 下载
 - (void)downloadItem:(id<SODownloadItem>)item {
     [self downloadItem:item autoStartDownload:YES];
@@ -558,117 +676,8 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     return [self.downloadMutableArray containsObject:item] || [self.completeMutableArray containsObject:item];
 }
 
-@end
-
-@implementation SODownloader (DownloadPath)
-
-- (void)createPath {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    BOOL isDir = NO;
-    BOOL exist = [fileManager fileExistsAtPath:self.downloaderPath isDirectory:&isDir];
-    if (!exist || !isDir) {
-        NSError *error;
-        [fileManager createDirectoryAtPath:self.downloaderPath withIntermediateDirectories:YES attributes:nil error:&error];
-        if (error) {
-            NSLog(@"SODownloader create downloaderPath fail!");
-        }
-    }
-}
-
-- (NSString *)resumePathForItem:(id<SODownloadItem>)item {
-    NSString *tempFileName = [[self pathForDownloadURL:[item so_downloadURL]]stringByAppendingPathExtension:@"download"];
-    return [self.downloaderPath stringByAppendingPathComponent:tempFileName];
-}
-
-- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
-    [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
-}
-
-/*
- NSURLSessionResumeInfoVersion 与 iOS 版本对应
- 1 ----------- iOS 7
- 2 ----------- iOS 8、iOS 9、iOS 10
- 4 ----------- iOS 11
- */
-- (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
-    NSString *resumePath = [self resumePathForItem:item];
-    if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
-        NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
-        NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
-        NSString *tempPath = nil;
-        switch (resumeInfoVersion) {
-            case 1:
-                tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
-                break;
-            default:
-            {
-                NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
-                if (tempFileName) {
-                    tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
-                } else {
-                    NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
-                }
-            }
-                break;
-        }
-        if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
-            NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
-            [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
-            return resumeData;
-        } else {
-#ifdef DEBUG
-            NSLog(@"没有找到文件：%@", tempPath);
-#endif
-        }
-    } else {
-#ifdef DEBUG
-        NSLog(@"没有找到文件：%@", resumePath);
-#endif
-    }
-    return nil;
-}
-
-- (NSString *)pathForDownloadURL:(NSURL *)url {
-    NSData *data = [[url absoluteString] dataUsingEncoding:NSUTF8StringEncoding];
-    uint8_t digest[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(data.bytes, (CC_LONG)data.length, digest);
-    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
-        [output appendFormat:@"%02x", digest[i]];
-    }
-    return [output copy];
-}
- 
-@end
-
-@implementation SODownloader (DownloadNotify)
-
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState {
-    if ([item respondsToSelector:@selector(setSo_downloadState:)]) {
-        item.so_downloadState = downloadState;
-    } else {
-        NSLog(@"下载模型必须实现setDownloadState:才能获取到正确的下载状态！");
-    }
-}
-
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress {
-    if ([item respondsToSelector:@selector(setSo_downloadProgress:)]) {
-        item.so_downloadProgress = downloadProgress;
-    } else {
-        NSLog(@"下载模型必须实现setDownloadProgress:才能获取到正确的下载进度！");
-    }
-}
-
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error {
-    if ([item respondsToSelector:@selector(setSo_downloadError:)]) {
-        item.so_downloadError = error;
-    }
-}
-
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed {
-    if ([item respondsToSelector:@selector(setSo_downloadSpeed:)]) {
-        item.so_downloadSpeed = downloadSpeed;
-    }
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    // TODO: 保存下载状态
 }
 
 @end
