@@ -194,7 +194,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         return ;
     }
     NSURLSessionDownloadTask *downloadTask = nil;
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URLIdentifier]];
+    NSURLRequest *request = [self.sessionManager.requestSerializer requestWithMethod:@"GET" URLString:URLIdentifier parameters:nil error:nil];
     if (!request) {
         NSError *URLError = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorBadURL userInfo:nil];
         NSLog(@"SODownload fail %@", URLError);
