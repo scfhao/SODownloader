@@ -90,16 +90,7 @@
 }
 
 #pragma mark - SODownloadItem必须实现的方法
-/**
- 我测试用的下载文件放在本地的Apache服务器上，Mac 上自带Apache，很方便当测试用的 HTTP 文件服务器。
- 本地环境：macOS Sierra 10.12.3，启用 Apache 作为文件服务器的的步骤如下（以我测试下载的情况为例）：
- 1. 将要下载的文件放在 Apache 的 Documents 路径（/Library/WebServer/Documents/）下。这个默认的 Documents 路径可以改成别的，但如果你是初次使用 Apache，建议直接用这个默认的路径好了。如果把要下载的文件（比如file.ex）直接放到这个 Documents 目录中，下载地址就是（http://localhost/file.ex）。
- 2. 打开终端，执行`sudo apachectl start`启动 Apache 服务器。
- 3. 没有第三步了，很简单的。
-- (NSURL *)so_downloadURL {
-    return [NSURL URLWithString:[NSString stringWithFormat:@"http://192.168.2.1/Music/xuan/%@.mp3", @(self.index).stringValue]];
-}
- */
+/// 这个方法返回该模型对应的文件的下载地址，当前 Demo 中下载的文件都存放在七牛云存储中，七牛云存储给每位用户的免费下载流量是10G每月，请大家在运行Demo时手下留情，替换成自己的下载链接更好了。如果有适合测试下载的免费方案，也请通过邮件等方式推荐给 scfhao@126.com
 - (NSURL *)so_downloadURL {
     return [NSURL URLWithString:[NSString stringWithFormat:@"http://omy5nu09z.bkt.clouddn.com/%@.mp3", @(self.index).stringValue]];
 }

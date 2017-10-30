@@ -528,6 +528,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
+#pragma mark - 暂停下载相关方法
 /// 暂停
 - (void)pauseItem:(id<SODownloadItem>)item {
     if (![self isControlDownloadFlowForItem:item]) {
@@ -539,6 +540,19 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
+/// 暂停全部
+- (void)pauseAll {
+    dispatch_sync(self.synchronizationQueue, ^{
+        [self _pauseAll];
+    });
+}
+
+- (void)_pauseAll {
+    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
+        [self _pauseItem:item];
+    }
+}
+
 - (void)_pauseItem:(id<SODownloadItem>)item {
     if (item.so_downloadState == SODownloadStateLoading || item.so_downloadState == SODownloadStateWait) {
         [self _pauseTaskForItem:item saveResumeData:YES];
@@ -546,7 +560,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-/// 取消／删除
+#pragma mark 取消下载相关方法
 - (void)cancelItem:(id<SODownloadItem>)item {
     if (![self isControlDownloadFlowForItem:item]) {
         NSLog(@"SODownloader: can't cancel a item not in control of SODownloader!");
@@ -559,15 +573,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     dispatch_sync(self.synchronizationQueue, ^{
         [self _cancelItem:item remove:remove];
     });
-}
-
-- (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove {
-    [self _pauseTaskForItem:item saveResumeData:NO];
-    [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
-    [self notifyDownloadItem:item withDownloadProgress:0];
-    if (remove && [self.downloadMutableArray count]) {
-        [self.downloadArrayWarpper removeObject:item];
-    }
 }
 
 - (void)cancelItems:(NSArray<SODownloadItem> *)items {
@@ -592,16 +597,12 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
-/// 暂停全部
-- (void)pauseAll {
-    dispatch_sync(self.synchronizationQueue, ^{
-        [self _pauseAll];
-    });
-}
-
-- (void)_pauseAll {
-    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
-        [self _pauseItem:item];
+- (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove {
+    [self _pauseTaskForItem:item saveResumeData:NO];
+    [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
+    [self notifyDownloadItem:item withDownloadProgress:0];
+    if (remove && [self.downloadMutableArray count]) {
+        [self.downloadArrayWarpper removeObject:item];
     }
 }
 
@@ -669,12 +670,13 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    for (id<SODownloadItem> item in self.downloadArray) {
-        [self _pauseTaskForItem:item saveResumeData:YES];
-    }
+    dispatch_sync(self.synchronizationQueue, ^{
+        for (id<SODownloadItem> item in self.downloadArray) {
+            [self _pauseTaskForItem:item saveResumeData:YES];
+        }
+    });
 }
 
-//////////////
 - (void)_pauseTaskForItem:(id<SODownloadItem>)item saveResumeData:(BOOL)save {
     if (item.so_downloadState == SODownloadStateLoading) {
         NSURLSessionDownloadTask *downloadTask = [self downloadTaskForItem:item];
