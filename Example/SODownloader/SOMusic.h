@@ -14,11 +14,15 @@
 
 @interface SOMusic : NSObject<SODownloadItem>
 
+// 这个属性只是我用来区分我的音频对象的，你的模型对象中是不需要这个属性的。
 @property (assign, readonly, nonatomic) NSInteger index;
 
 + (NSArray <SOMusic *>*)allMusicList;
 
 /// 音乐文件下载目标位置
 - (NSString *)savePath;
+
+- (instancetype)initWithIndex:(NSInteger)index;
++ (instancetype)musicAtIndex:(NSInteger)index;
 
 @end

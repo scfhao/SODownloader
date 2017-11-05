@@ -9,6 +9,8 @@
 #import "SOMusic.h"
 #import "SOLog.h"
 #import "SODownloader.h"
+#import "SOSimulateDB.h"
+#import "SODownloader+MusicDownloader.h"
 
 @interface SOMusic ()
 
@@ -19,21 +21,27 @@
 @implementation SOMusic
 @synthesize so_downloadProgress, so_downloadState = _so_downloadState, so_downloadError, so_downloadSpeed = _so_downloadSpeed;
 
+// 这个数组模拟应用从网络中获取到一个可下载文件列表
 + (NSArray <SOMusic *>*)allMusicList {
-    static NSArray *array = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSMutableArray *musicList = [[NSMutableArray alloc]initWithCapacity:TestMusicCount];
-        for (NSInteger index = 0; index < TestMusicCount; index++) {
-            [musicList addObject:[self musicAtIndex:index]];
-        }
-        array = [musicList copy];
-    });
-    return array;
+    NSMutableArray *musicList = [[NSMutableArray alloc]initWithCapacity:TestMusicCount];
+    for (NSInteger index = 0; index < TestMusicCount; index++) {
+        [musicList addObject:[self musicAtIndex:index]];
+    }
+    return [musicList copy];
 }
 
 + (instancetype)musicAtIndex:(NSInteger)index {
-    return [[self alloc]initWithIndex:index];
+    // 这样可以获取到之前已经添加到 SODownloader 中的一个下载模型
+    SOMusic *musicAlreadyInDownloader = (SOMusic *)[[SODownloader musicDownloader]filterItemUsingFilter:^BOOL(id<SODownloadItem>  _Nonnull item) {
+        SOMusic *music = (SOMusic *)item;
+        return music.index == index;
+    }];
+    // 判断一下 SODownloader 里是否已经存在一个同样的模型，如果存在就返回那个已有的，不存在就可以重新创建一个
+    if (musicAlreadyInDownloader) {
+        return musicAlreadyInDownloader;
+    } else {
+        return [[self alloc]initWithIndex:index];
+    }
 }
 
 - (instancetype)initWithIndex:(NSInteger)index {
@@ -87,17 +95,20 @@
         default:
             break;
     }
+    [SOSimulateDB save:self];
 }
 
 #pragma mark - SODownloadItem必须实现的方法
 /// 这个方法返回该模型对应的文件的下载地址，当前 Demo 中下载的文件都存放在七牛云存储中，七牛云存储给每位用户的免费下载流量是10G每月，请大家在运行Demo时手下留情，替换成自己的下载链接更好了。如果有适合测试下载的免费方案，也请通过邮件等方式推荐给 scfhao@126.com
 - (NSURL *)so_downloadURL {
-    return [NSURL URLWithString:[NSString stringWithFormat:@"http://omy5nu09z.bkt.clouddn.com/%@.mp3", @(self.index).stringValue]];
+    return [NSURL URLWithString:[NSString stringWithFormat:@"http://192.168.1.118/music/%@.mp3", @(self.index).stringValue]];
+//    return [NSURL URLWithString:[NSString stringWithFormat:@"http://omy5nu09z.bkt.clouddn.com/%@.mp3", @(self.index).stringValue]];
 }
 
 #pragma mark - SODownloadItem建议实现的方法
 /**
  实现下面这两个方法用于判断两个对象相等。这两个方法一般不会被直接调用，而是间接的调用，比如在集合（NSArray、NSSet等）中的相关方法（比如indexOfObject、containsObject等）中被间接调用。
+ 了解更多关于这两个方法的内容可以看我写的这个 [WiKi](https://github.com/scfhao/SODownloader/wiki/%E4%BF%9D%E8%AF%81%E4%B8%8B%E8%BD%BD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%94%AF%E4%B8%80%E6%80%A7 )
  */
 - (BOOL)isEqual:(id)object {
     if (![object isKindOfClass:[SOMusic class]]) {

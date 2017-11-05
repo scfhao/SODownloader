@@ -9,6 +9,7 @@
 #import "SODownloader+MusicDownloader.h"
 #import "SOLog.h"
 #import "SOMusic.h"
+#import "SOSimulateDB.h"
 
 @implementation SODownloader (MusicDownloader)
 
@@ -53,22 +54,17 @@
         // SODownloader 不负责保存下载状态，因为不同应用中使用的持久化方案因人而异，所以 SODownloader 仅提供简化下载封装，持久化工作交由使用 SODownloader 的用户自由定制，你可以使用 FMDB、CoreData 等持久化方案。
         // 每次应用重新启动，包括后台下载任务完成后应用被唤起时，需要为重新创建的 SODownloader 对象恢复上次应用运行结束前的状态。
         
-        // 恢复已下载项目的状态，下面的代码仅作示例，生产环境下不建议通过文件是否存在来判断是否已下载
-        NSMutableArray *downloadedArray = [NSMutableArray array];
-        for (SOMusic *music in [SOMusic allMusicList]) {
-            if ([[NSFileManager defaultManager]fileExistsAtPath:[music savePath]]) {
-                [downloadedArray addObject:music];
-            }
-        }
+        // 恢复已下载项目的状态，下面的代码仅作示例
+        NSArray *downloadedArray = [SOSimulateDB complatedMusicArrayInDB];
         [downloader markItemsAsComplate:(NSArray<SODownloadItem> *)downloadedArray];
         
-        // 恢复等待、下载中状态的项目，后面的参数传 YES 会使下载器自动下载上次程序退出时正在下载的项目
-        // NSArray *itemsDownloadImmediately = ...
-        // [downloader downloadItems:itemsDownloadImmediately autoStartDownload:YES];
+        // 恢复等待、下载中状态的项目，后面的参数传 YES 会使下载器自动继续下载上次程序退出时正在下载的项目
+        NSArray *itemsDownloadImmediately = [SOSimulateDB downloadingMusicArrayInDB];
+        [downloader downloadItems:(NSArray<SODownloadItem> *)itemsDownloadImmediately autoStartDownload:YES];
         
         // 恢复程序上次运行时处于暂停状态的项目，后面的参数 NO 保证这些项目继续处于暂停状态
-        // NSArray *pausedItems = ...;
-        // [downloader downloadItems:pausedItems autoStartDownload:NO];
+        NSArray *pausedItems = [SOSimulateDB pausedMusicArrayInDB];
+        [downloader downloadItems:(NSArray<SODownloadItem> *)pausedItems autoStartDownload:NO];
     });
     return downloader;
 }

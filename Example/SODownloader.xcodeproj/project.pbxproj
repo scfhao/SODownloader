@@ -30,6 +30,7 @@
 		6003F5BA195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5B8195388D20070C39A /* InfoPlist.strings */; };
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
+		D93A3E7D1FAF1B26000B0A12 /* SOSimulateDB.m in Sources */ = {isa = PBXBuildFile; fileRef = D93A3E7C1FAF1B26000B0A12 /* SOSimulateDB.m */; };
 		D97A46791F617D180088A325 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D97A467B1F617D180088A325 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
@@ -87,6 +88,8 @@
 		B0B7BDCF7D6FBD97D8794C41 /* Pods_SODownloader_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SODownloader_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD7D56A8863E003A78B0EF48 /* Pods-SODownloader_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example.release.xcconfig"; sourceTree = "<group>"; };
 		CFB0E5EE6B8F5D4AD4EE7EB6 /* SODownloader.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SODownloader.podspec; path = ../SODownloader.podspec; sourceTree = "<group>"; };
+		D93A3E7B1FAF1B26000B0A12 /* SOSimulateDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SOSimulateDB.h; sourceTree = "<group>"; };
+		D93A3E7C1FAF1B26000B0A12 /* SOSimulateDB.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SOSimulateDB.m; sourceTree = "<group>"; };
 		D97A467A1F617D180088A325 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		EFA4C4CFF217B9321BB9E034 /* Pods-SODownloader_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Tests/Pods-SODownloader_Tests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -146,6 +149,8 @@
 			children = (
 				09504EC81F398FA2001D5EF6 /* SOMusic.h */,
 				09504EC91F398FA2001D5EF6 /* SOMusic.m */,
+				D93A3E7B1FAF1B26000B0A12 /* SOSimulateDB.h */,
+				D93A3E7C1FAF1B26000B0A12 /* SOSimulateDB.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -460,6 +465,7 @@
 			files = (
 				09504ED71F398FA2001D5EF6 /* SOSimpleDownloadViewController.m in Sources */,
 				09504ED51F398FA2001D5EF6 /* SOMusicListCell.m in Sources */,
+				D93A3E7D1FAF1B26000B0A12 /* SOSimulateDB.m in Sources */,
 				6003F59E195388D20070C39A /* SOAppDelegate.m in Sources */,
 				09504ED61F398FA2001D5EF6 /* SOMusicListViewController.m in Sources */,
 				09504ED01F398FA2001D5EF6 /* AppDelegate+SODownloader.m in Sources */,
