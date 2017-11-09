@@ -77,15 +77,6 @@
 - (void)setSo_downloadState:(SODownloadState)so_downloadState {
     _so_downloadState = so_downloadState;
     switch (so_downloadState) {
-        case SODownloadStateLoading:
-            SODebugLog(@"开始下载：%@", [self description]);
-            break;
-        case SODownloadStateComplete:
-            SODebugLog(@"下载完成：%@", [self description]);
-            break;
-        case SODownloadStateError:
-            SODebugLog(@"下载失败：%@ | %@", [self description], self.so_downloadError);
-            break;
         case SODownloadStateNormal:
             if ([[NSFileManager defaultManager]fileExistsAtPath:[self savePath]]) {
                 // 清理下载的文件
@@ -95,20 +86,20 @@
         default:
             break;
     }
+    SOCustomDebugLog(@"<Progress>", @"%@", @(self.so_downloadProgress).stringValue);
     [SOSimulateDB save:self];
 }
 
 #pragma mark - SODownloadItem必须实现的方法
 /// 这个方法返回该模型对应的文件的下载地址，当前 Demo 中下载的文件都存放在七牛云存储中，七牛云存储给每位用户的免费下载流量是10G每月，请大家在运行Demo时手下留情，替换成自己的下载链接更好了。如果有适合测试下载的免费方案，也请通过邮件等方式推荐给 scfhao@126.com
 - (NSURL *)so_downloadURL {
-    return [NSURL URLWithString:[NSString stringWithFormat:@"http://192.168.1.118/music/%@.mp3", @(self.index).stringValue]];
-//    return [NSURL URLWithString:[NSString stringWithFormat:@"http://omy5nu09z.bkt.clouddn.com/%@.mp3", @(self.index).stringValue]];
+    return [NSURL URLWithString:[NSString stringWithFormat:@"http://omy5nu09z.bkt.clouddn.com/%@.mp3", @(self.index).stringValue]];
 }
 
 #pragma mark - SODownloadItem建议实现的方法
 /**
  实现下面这两个方法用于判断两个对象相等。这两个方法一般不会被直接调用，而是间接的调用，比如在集合（NSArray、NSSet等）中的相关方法（比如indexOfObject、containsObject等）中被间接调用。
- 了解更多关于这两个方法的内容可以看我写的这个 [WiKi](https://github.com/scfhao/SODownloader/wiki/%E4%BF%9D%E8%AF%81%E4%B8%8B%E8%BD%BD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%94%AF%E4%B8%80%E6%80%A7 )
+ 了解更多关于这两个方法的内容可以看我写的这个 [WiKi](https://github.com/scfhao/SODownloader/wiki/%E4%BF%9D%E8%AF%81%E4%B8%8B%E8%BD%BD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%94%AF%E4%B8%80%E6%80%A7)
  */
 - (BOOL)isEqual:(id)object {
     if (![object isKindOfClass:[SOMusic class]]) {

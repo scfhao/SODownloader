@@ -95,7 +95,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         
         self.sessionManager = [[AFHTTPSessionManager alloc]initWithSessionConfiguration:sessionConfiguration];
         self.sessionManager.responseSerializer = [SODownloadResponseSerializer serializer];
-        
+
         self.downloaderIdentifier = identifier;
         self.completeBlock = completeBlock;
         self.downloaderPath = [NSTemporaryDirectory() stringByAppendingPathComponent:self.downloaderIdentifier];

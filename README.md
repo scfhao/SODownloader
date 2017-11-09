@@ -24,17 +24,11 @@ pod "SODownloader"
 
 ## Usage
 
-使用方法可参考[Wiki](https://github.com/scfhao/SODownloader/wiki)
+使用方法可参考[Wiki](https://github.com/scfhao/SODownloader/wiki)，如果 SODownloader 对你有所帮助，别忘了点击本项目右上角的 Star！
 
-### 预告
+## Help
 
-近期将对用户主动杀死App进程这种情况进行处理，敬请期待！已经集成在项目中的，请留意 CocoaPods 的更新！
-
-## 求助
-
-现在的 SODownloader Demo 中下载的文件存放在七牛云存储上，之前的流量一直在免费额度内，但最近出现了产生费用的情况，请各位在运行 SODownloader 的 Demo 工程时手下留情！
-
-另外，征集适合测试下载用的网站推荐，可以托管文件，可以获取到要下载的文件的固定链接即可，欢迎给我发 email 推荐。
+目前 SODownloader Demo 中下载的文件托管在七牛云存储上，大家在运行此 Demo 下载示例文件时在七牛云存储产生的流量已经超过免费额度。所以现在征集适合用于测试下载用的云存储方案（可以上传文件并且有一个固定的下载链接即可），如果有合适的，一定要推荐给我！
 
 ## Author
 

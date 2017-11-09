@@ -38,10 +38,11 @@ typedef NS_ENUM(NSUInteger, SOLogLevel) {
 #define SOLog(logLevel, head, fmt, ...) do{ if (SO_LOG_LEVEL <= logLevel) NSLog(@"%@: "fmt, head, ##__VA_ARGS__); } while(0)
 
 // 便捷调用方法
-#define SOVerboseLog(fmt, ...)  SOLog(SOLogLevelVerbose, @"[Verbose]", fmt, ##__VA_ARGS__)
-#define SODebugLog(fmt, ...)    SOLog(SOLogLevelDebug, @"[Debug]", fmt, ##__VA_ARGS__)
-#define SOInfoLog(fmt, ...)     SOLog(SOLogLevelInfo, @"[Info]", fmt, ##__VA_ARGS__)
-#define SOWarnLog(fmt, ...)     SOLog(SOLogLevelWarn, @"[Warn]", fmt, ##__VA_ARGS__)
-#define SOErrorLog(fmt, ...)    SOLog(SOLogLevelError, @"[Error]", fmt, ##__VA_ARGS__)
+#define SOVerboseLog(fmt, ...)              SOLog(SOLogLevelVerbose, @"[Verbose]", fmt, ##__VA_ARGS__)
+#define SODebugLog(fmt, ...)                SOLog(SOLogLevelDebug, @"[Debug]", fmt, ##__VA_ARGS__)
+#define SOInfoLog(fmt, ...)                 SOLog(SOLogLevelInfo, @"[Info]", fmt, ##__VA_ARGS__)
+#define SOWarnLog(fmt, ...)                 SOLog(SOLogLevelWarn, @"[Warn]", fmt, ##__VA_ARGS__)
+#define SOErrorLog(fmt, ...)                SOLog(SOLogLevelError, @"[Error]", fmt, ##__VA_ARGS__)
+#define SOCustomDebugLog(key, fmt, ...)     SOLog(SOLogLevelDebug, key, fmt, ##__VA_ARGS__)
 
 #endif /* SOLog_h */
