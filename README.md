@@ -24,15 +24,23 @@ pod "SODownloader"
 
 ## Usage
 
-使用方法可参考[Wiki](https://github.com/scfhao/SODownloader/wiki)，如果 SODownloader 对你有所帮助，别忘了点击本项目右上角的 Star！
+使用方法参考[Wiki](https://github.com/scfhao/SODownloader/wiki)，如果 SODownloader 对你有所帮助，别忘了点击本项目右上角的 Star！
 
 ## Help
 
-目前 SODownloader Demo 中下载的文件托管在七牛云存储上，大家在运行此 Demo 下载示例文件时在七牛云存储产生的流量已经超过免费额度。所以现在征集适合用于测试下载用的云存储方案（可以上传文件并且有一个固定的下载链接即可），如果有合适的，一定要推荐给我！
+目前 SODownloader Demo 中下载的文件托管在七牛云存储上，大家在运行 Demo 下载 Demo 中的 mp3 文件时会在七牛云存储上产生费用，所以请大家运行此 Demo 程序时，请先将 SOMusic.m 文件中的下载链接换成自己的链接进行测试。
+
+同时征集适合用于测试下载用的云存储方案，如果有合适的，请一定要推荐给我！满足以下的条件就行：
+
+1. 可以上传用于测试下载的文件上去。
+2. 要下载的文件的下载链接是固定不变的。
+3. 服务器支持 Content-Lenght 响应头。
 
 ## Author
 
-scfhao, scfhao@126.com
+scfhao@126.com
+
+> 邮件联系 scfhao 询问 SODownloader 的使用问题前，请先看完 [Wiki](https://github.com/scfhao/SODownloader/wiki) 中的内容。
 
 ## License
 
