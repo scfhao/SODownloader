@@ -36,6 +36,8 @@ pod "SODownloader"
 2. 要下载的文件的下载链接是固定不变的。
 3. 服务器支持 Content-Lenght 响应头。
 
+没有注册过七牛云存储的朋友，可以通过这个[链接](https://portal.qiniu.com/signup?code=3lc4jrwodxqoh)注册七牛云存储，完成实名认证后，我就可以有更多的免费流量用于供大家测试使用。
+
 ## Author
 
 scfhao@126.com
