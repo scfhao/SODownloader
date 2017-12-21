@@ -32,7 +32,7 @@
 
 + (instancetype)musicAtIndex:(NSInteger)index {
     // 这样可以获取到之前已经添加到 SODownloader 中的一个下载模型
-    SOMusic *musicAlreadyInDownloader = (SOMusic *)[[SODownloader musicDownloader]filterItemUsingFilter:^BOOL(id<SODownloadItem>  _Nonnull item) {
+    SOMusic *musicAlreadyInDownloader = (SOMusic *)[[SODownloader musicDownloader]filterItemUsingFilter:^BOOL(id<SODownloadItemProtocol>  _Nonnull item) {
         SOMusic *music = (SOMusic *)item;
         return music.index == index;
     }];

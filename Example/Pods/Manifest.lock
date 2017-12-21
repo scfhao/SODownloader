@@ -14,7 +14,7 @@ PODS:
   - AFNetworking/Serialization (3.1.0)
   - AFNetworking/UIKit (3.1.0):
     - AFNetworking/NSURLSession
-  - SODownloader (0.1.0):
+  - SODownloader (0.1.2):
     - AFNetworking (~> 3.0)
 
 DEPENDENCIES:
@@ -26,8 +26,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
-  SODownloader: 31709263564b44ddd5bd9de18199eaf942dbe727
+  SODownloader: 43d162cf0c527d423b05b844422f6a61e778d445
 
 PODFILE CHECKSUM: 9e3cf8bca1796c7acb04723cfa55b54cbdd0825f
 
-COCOAPODS: 1.2.0
+COCOAPODS: 1.4.0.rc.1

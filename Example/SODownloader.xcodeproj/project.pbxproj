@@ -87,7 +87,7 @@
 		AFBD5A4520E2B067F40DBF99 /* Pods-SODownloader_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		B0B7BDCF7D6FBD97D8794C41 /* Pods_SODownloader_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SODownloader_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD7D56A8863E003A78B0EF48 /* Pods-SODownloader_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SODownloader_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example.release.xcconfig"; sourceTree = "<group>"; };
-		CFB0E5EE6B8F5D4AD4EE7EB6 /* SODownloader.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SODownloader.podspec; path = ../SODownloader.podspec; sourceTree = "<group>"; };
+		CFB0E5EE6B8F5D4AD4EE7EB6 /* SODownloader.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = SODownloader.podspec; path = ../SODownloader.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		D93A3E7B1FAF1B26000B0A12 /* SOSimulateDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SOSimulateDB.h; sourceTree = "<group>"; };
 		D93A3E7C1FAF1B26000B0A12 /* SOSimulateDB.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SOSimulateDB.m; sourceTree = "<group>"; };
 		D97A467A1F617D180088A325 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -387,13 +387,16 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SODownloader_Tests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		A5C73D80DCABFBF98FBE91F3 /* [CP] Embed Pods Frameworks */ = {
@@ -402,9 +405,14 @@
 			files = (
 			);
 			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-SODownloader_Example/Pods-SODownloader_Example-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/AFNetworking/AFNetworking.framework",
+				"${BUILT_PRODUCTS_DIR}/SODownloader/SODownloader.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AFNetworking.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SODownloader.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -447,13 +455,16 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SODownloader_Example-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

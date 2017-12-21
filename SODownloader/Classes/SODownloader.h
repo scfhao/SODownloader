@@ -20,12 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
  @param item 下载项对象
  @param location 文件位置，这个位置位于临时目录，所以用户需从此目录将文件移动到Documents、Library、Cache等目录。此block调用完后，SODownloader会自动移除该位置的文件。
  */
-typedef NSError *_Nullable(^SODownloadCompleteBlock_t)(SODownloader *downloader, id<SODownloadItem> item, NSURL *location);
+typedef NSError *_Nullable(^SODownloadCompleteBlock_t)(SODownloader *downloader, id<SODownloadItemProtocol> item, NSURL *location);
 
 /**
  用于从SODownloader的下载列表和已完成列表中筛选下载项。
  */
-typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
+typedef BOOL(^SODownloadFilter_t)(id<SODownloadItemProtocol> item);
 
 /**
  @interface SODownloader
@@ -36,8 +36,10 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
 
 /// 每个下载器都有一个唯一标识符，不同的下载器应使用不同的标识符
 @property (nonatomic, copy, readonly) NSString *downloaderIdentifier;
-/// 最大下载数
+/// 最大下载数, 一般不超过3个
 @property (nonatomic, assign) NSInteger maximumActiveDownloads;
+/// 总下载速率, 单位byte/s, 添加在 main runloop, 使用NSRunLoopCommonModes
+@property (nonatomic, assign) NSInteger totalSpeed;
 
 #pragma mark - 相关数组
 /**
@@ -54,6 +56,12 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  */
 @property (nonatomic, strong, readonly) NSArray *completeArray;
 
+/**
+ @brief 已下载项数组
+ @description 不可变数组，外部无法对此数组进行增、删、改
+ @see SODownloaderCompleteArrayObserveKeyPath 外部可通过 KVO 对此数组的内容变化进行观察
+ */
+@property (nonatomic, strong, readonly) NSArray *downloadingArray;
 #pragma mark - 创建/初始化
 /**
  为该identifier创建一个downloader。
@@ -68,7 +76,7 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  对象置换：
  在应用中同一条数据可能会有多份对象(比如已完成列表中已有一个代表同一项目的对象，然后在某一列表界面从网络获取到一个文件列表)，这时可能会需要获取SODownloader中的那个具备正确下载状态的对象。
  */
-- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter;
+- (id<SODownloadItemProtocol>)filterItemUsingFilter:(SODownloadFilter_t)filter;
 
 /**
  错误处理。
@@ -110,7 +118,7 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  @param item 要加入下载列表的模型对象，需要实现 SODownloadItem 协议。
  @see downloadItem:autoStartDownload:
  */
-- (void)downloadItem:(id<SODownloadItem>)item;
+- (void)downloadItem:(id<SODownloadItemProtocol>)item;
 
 /**
  @brief 将 item 加入下载列表
@@ -119,14 +127,14 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  @see downloadItems:autoStartDownload:
  @description 应用重启后，将上次程序运行时未下载完成的项目通过此方法告诉 SODownloader 对象，对于上次程序挂起前处于暂停状态的项目，autoStartDownload参数传入NO；对于上次程序挂起前处于等待和下载中状态的项目，autoStartDownload参数传入YES。对于上次程序挂起前已下载的项目，调用`markItemsAsComplete:`方法将其标记为已下载。
  */
-- (void)downloadItem:(id<SODownloadItem>)item autoStartDownload:(BOOL)autoStartDownload;
+- (void)downloadItem:(id<SODownloadItemProtocol>)item autoStartDownload:(BOOL)autoStartDownload;
 
 /**
  @brief 将 items 加入下载列表
  @param items 要加入下载列表的模型对象数组，需要实现 SODownloadItem 协议。
  @see downloadItems:autoStartDownload:
  */
-- (void)downloadItems:(NSArray<SODownloadItem>*)items;
+- (void)downloadItems:(NSArray<id<SODownloadItemProtocol>> *)items;
 
 /**
  @brief 将 items 数组加入下载列表
@@ -135,38 +143,40 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItem> item);
  @see downloadItems:autoStartDownload:
  @description 应用重启后，将上次程序运行时未下载完成的项目通过此方法告诉 SODownloader 对象，对于上次程序挂起前处于暂停状态的项目，autoStartDownload参数传入NO；对于上次程序挂起前处于等待和下载中状态的项目，autoStartDownload参数传入YES。对于上次程序挂起前已下载的项目，调用`markItemsAsComplete:`方法将其标记为已下载。
  */
-- (void)downloadItems:(NSArray<SODownloadItem> *)items autoStartDownload:(BOOL)autoStartDownload;
+- (void)downloadItems:(NSArray<id<SODownloadItemProtocol>> *)items autoStartDownload:(BOOL)autoStartDownload;
 
 /// 暂停：用于等待或下载中状态的项目
-- (void)pauseItem:(id<SODownloadItem>)item;
+- (void)pauseItem:(id<SODownloadItemProtocol>)item;
 - (void)pauseAll;
 /// 继续：用于已暂停或失败状态的下载项
-- (void)resumeItem:(id<SODownloadItem>)item;
+- (void)resumeItem:(id<SODownloadItemProtocol>)item;
 - (void)resumeAll;
 /// 取消：用于取消下载列表中尚未下载完成的项目
-- (void)cancelItem:(id<SODownloadItem>)item;
-- (void)cancelItems:(NSArray<SODownloadItem>*)items;
+- (void)cancelItem:(id<SODownloadItemProtocol>)item;
+- (void)cancelItems:(NSArray<id<SODownloadItemProtocol>> *)items;
 - (void)cancenAll;
 
 /// 将之前下载的对象通过此方法告诉 SODownloader，SODownloader 对象会将其标记为已下载
-- (void)markItemsAsComplate:(NSArray<SODownloadItem>*)items;
+- (void)markItemsAsComplate:(NSArray<id<SODownloadItemProtocol>> *)items;
 /// 删除：删除已下载的项目
-- (void)removeCompletedItem:(id<SODownloadItem>)item;
+- (void)removeCompletedItem:(id<SODownloadItemProtocol>)item;
 - (void)removeAllCompletedItems;
 
 /// 判断该item是否在当前的downloader对象的下载列表或完成列表中
-- (BOOL)isControlDownloadFlowForItem:(id<SODownloadItem>)item;
+- (BOOL)isControlDownloadFlowForItem:(id<SODownloadItemProtocol>)item;
 
 @end
 
 #pragma mark - KVO
 /**
- 要对下载队列进行监控，最佳的方式就是使用 KVO 了，SODownloader 提供了两个对下载队列进行监控的 KeyPath，其中，观察`SODownloaderDownloadArrayObserveKeyPath`可以对 SODownloader 对象的 downloadArray 代表的数组进行监控；观察`SODownloaderCompleteArrayObserveKeyPath`可以对 SODownloader 对象的 completeArray 代表的数组进行监控。可以参考 SODownloadExample 中的已下载界面 SODownloadViewController 中对此的用法。
+ 要对下载队列进行监控，最佳的方式就是使用 KVO 了，SODownloader 提供了两个对下载队列进行监控的 KeyPath，其中，观察`SODownloaderDownloadArrayObserveKeyPath`可以对 SODownloader 对象的 downloadArray 代表的数组进行监控；观察`SODownloaderCompleteArrayObserveKeyPath`可以对 SODownloader 对象的 completeArray 代表的数组进行监控；观察`SODownloaderDownloadingArrayObserveKeyPath`可以对 SODownloader 对象的 downloadingArray 代表的数组进行监控；可以参考 SODownloadExample 中的已下载界面 SODownloadViewController 中对此的用法。
  */
 /// SODownloader 对象的 downloadArray 属性对应的 Observe KeyPath
 FOUNDATION_EXPORT NSString * const SODownloaderDownloadArrayObserveKeyPath;
 /// SODownloader 对象的 completeArray 属性对应的 Observe KeyPath
 FOUNDATION_EXPORT NSString * const SODownloaderCompleteArrayObserveKeyPath;
+/// SODownloader 对象的 downloadingArray 属性对应的 Observe KeyPath
+FOUNDATION_EXPORT NSString * const SODownloaderDownloadingArrayObserveKeyPath;
 
 #pragma mark - Notifications
 /// 当设备剩余空间不足、无法继续下载时，SODownloader 会暂停全部下载并发送此通知。

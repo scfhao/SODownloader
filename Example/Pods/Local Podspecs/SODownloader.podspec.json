@@ -1,8 +1,7 @@
 {
   "name": "SODownloader",
-  "version": "0.1.0",
-  "summary": "A short description of SODownloader.",
-  "description": "A simple downloader base on AFNetworking.",
+  "version": "0.1.2",
+  "summary": "A simple downloader base on AFNetworking.",
   "homepage": "https://github.com/scfhao/SODownloader",
   "license": {
     "type": "MIT",
@@ -13,7 +12,7 @@
   },
   "source": {
     "git": "https://github.com/scfhao/SODownloader.git",
-    "tag": "0.1.0"
+    "tag": "0.1.2"
   },
   "platforms": {
     "ios": "7.0"

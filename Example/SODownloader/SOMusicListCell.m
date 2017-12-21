@@ -90,7 +90,7 @@ static void * kSpeedContext = &kSpeedContext;
                 } else if (speed < 1024 * 1024) {
                     self.speedLabel.text = [NSString stringWithFormat:@"%li kb/s", speed / 1024];
                 } else {
-                    self.speedLabel.text = [NSString stringWithFormat:@"%li mb/s", speed / 1024 * 1024];
+                    self.speedLabel.text = [NSString stringWithFormat:@"%.1f mb/s", speed / 1024.0 / 1024];
                 }
             }
         });

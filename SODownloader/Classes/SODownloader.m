@@ -8,6 +8,7 @@
 
 #import "SODownloader.h"
 #import "AFNetworking.h"
+#import "NSTimer+SODownloader.h"
 #import "SODownloadResponseSerializer.h"
 #import <CommonCrypto/CommonDigest.h>
 
@@ -15,6 +16,7 @@ NSString * const SODownloaderNoDiskSpaceNotification = @"SODownloaderNoDiskSpace
 
 NSString * const SODownloaderDownloadArrayObserveKeyPath = @"downloadMutableArray";
 NSString * const SODownloaderCompleteArrayObserveKeyPath = @"completeMutableArray";
+NSString * const SODownloaderDownloadingArrayObserveKeyPath = @"downloadingMutableArray";
 
 static NSString * SODownloadProgressUserInfoStartTimeKey = @"SODownloadProgressUserInfoStartTime";
 static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgressUserInfoStartOffsetKey";
@@ -22,24 +24,24 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 @interface SODownloader (DownloadPath)
 
 - (void)createPath;
-- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item;
-- (NSData *)resumeDataForItem:(id<SODownloadItem>)item;
+- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItemProtocol>)item;
+- (NSData *)resumeDataForItem:(id<SODownloadItemProtocol>)item;
 
 @end
 
 @interface SODownloader (DownloadNotify)
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed;
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error;
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadProgress:(double)downloadProgress;
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadState:(SODownloadState)downloadState;
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadSpeed:(NSInteger)downloadSpeed;
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadError:(NSError *)error;
 
 @end
 
 @interface SODownloader (_DownloadControl)
 
 - (void)_pauseAll;
-- (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove;
+- (void)_cancelItem:(id<SODownloadItemProtocol>)item remove:(BOOL)remove;
 
 @end
 
@@ -53,13 +55,18 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 @property (nonatomic, strong) NSMutableDictionary *tasks;
 @property (nonatomic, strong, readonly) NSMutableArray *downloadArrayWarpper;
 @property (nonatomic, strong, readonly) NSMutableArray *completeArrayWarpper;
+@property (nonatomic, strong, readonly) NSMutableArray *downloadingArrayWarpper;
 /// 下载项数组(包含等待中、下载中、暂停状态的下载项目)
 @property (nonatomic, strong) NSMutableArray *downloadMutableArray;
 /// 已下载项数组
 @property (nonatomic, strong) NSMutableArray *completeMutableArray;
+/// 下载中项数组
+@property (nonatomic, strong) NSMutableArray *downloadingMutableArray;
 
 @property (nonatomic, strong) AFHTTPSessionManager *sessionManager;
 @property (nonatomic, strong) dispatch_queue_t synchronizationQueue;
+
+@property (nonatomic, strong) NSTimer *speedTimer;
 
 // paths
 @property (nonatomic, strong) NSString *downloaderPath;
@@ -95,17 +102,34 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         
         self.sessionManager = [[AFHTTPSessionManager alloc]initWithSessionConfiguration:sessionConfiguration];
         self.sessionManager.responseSerializer = [SODownloadResponseSerializer serializer];
+      
+        __weak __typeof(self)weakSelf = self;
+        self.speedTimer = [NSTimer so_timerWithTimeInterval:1.0f block:^(NSTimer *timer) {
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            NSInteger speed = 0;
+            if (strongSelf.downloadingMutableArray.count == 0) return ;
+            for (id<SODownloadItemProtocol> item in strongSelf.downloadingMutableArray) {
+                if ([item respondsToSelector:@selector(so_downloadSpeed)]) {
+                    speed += item.so_downloadSpeed;
+                }
+            }
+            strongSelf.totalSpeed = MAX(0, speed);
+        } repeats:YES];
+        [[NSRunLoop mainRunLoop] addTimer:self.speedTimer forMode:NSRunLoopCommonModes];
 
         self.downloaderIdentifier = identifier;
         self.completeBlock = completeBlock;
         self.downloaderPath = [NSTemporaryDirectory() stringByAppendingPathComponent:self.downloaderIdentifier];
         
+        _maximumActiveDownloads = 3;
+        _totalSpeed = 0;
+        
         self.tasks = [[NSMutableDictionary alloc]init];
         self.downloadMutableArray = [[NSMutableArray alloc]init];
         self.completeMutableArray = [[NSMutableArray alloc]init];
+        self.downloadingMutableArray = [NSMutableArray arrayWithCapacity:self.maximumActiveDownloads];
         
         [self createPath];
-        _maximumActiveDownloads = 3;
         
         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
     }
@@ -113,6 +137,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)dealloc {
+    [self.speedTimer invalidate];
     [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
 }
 
@@ -124,12 +149,20 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     return [self mutableArrayValueForKey:SODownloaderCompleteArrayObserveKeyPath];
 }
 
+- (NSMutableArray *)downloadingArrayWarpper {
+  return [self mutableArrayValueForKey:SODownloaderDownloadingArrayObserveKeyPath];
+}
+
 - (NSArray *)downloadArray {
     return [self.downloadMutableArray copy];
 }
 
 - (NSArray *)completeArray {
     return [self.completeMutableArray copy];
+}
+
+- (NSArray *)downloadingArray {
+  return [self.downloadingMutableArray copy];
 }
 
 - (void)setAllowsCellularAccess:(BOOL)allowsCellularAccess {
@@ -163,9 +196,9 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
-- (id<SODownloadItem>)filterItemUsingFilter:(SODownloadFilter_t)filter {
+- (id<SODownloadItemProtocol>)filterItemUsingFilter:(SODownloadFilter_t)filter {
     if (!filter) { return nil; }
-    __block id<SODownloadItem> item = nil;
+    __block id<SODownloadItemProtocol> item = nil;
     [self.downloadArrayWarpper enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (filter(obj)) {
             item = obj;
@@ -185,7 +218,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 #pragma mark - 下载处理
 /// 开始下载一个item，这个方法必须在同步线程中调用，且调用前必须先判断是否可以开始新的下载
-- (void)startDownloadItem:(id<SODownloadItem>)item {
+- (void)startDownloadItem:(id<SODownloadItemProtocol>)item {
     [self notifyDownloadItem:item withDownloadState:SODownloadStateLoading];
     NSString *URLIdentifier = [item.so_downloadURL absoluteString];
     
@@ -272,7 +305,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (void)handleError:(NSError *)error forItem:(id<SODownloadItem>)item {
+- (void)handleError:(NSError *)error forItem:(id<SODownloadItemProtocol>)item {
     // 取消的情况在task cancel方法时处理，所以这里只需处理非取消的情况。
     BOOL handledError = NO;
     if ([error.domain isEqualToString:NSURLErrorDomain]) {
@@ -311,24 +344,26 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 #pragma mark - 同时下载数支持
-- (void)startDownloadTask:(NSURLSessionDownloadTask *)downloadTask forItem:(id<SODownloadItem>)item {
+- (void)startDownloadTask:(NSURLSessionDownloadTask *)downloadTask forItem:(id<SODownloadItemProtocol>)item {
     self.tasks[[item.so_downloadURL absoluteString]] = downloadTask;
     [downloadTask resume];
+    [self.downloadingArrayWarpper addObject:item];
     ++self.activeRequestCount;
 }
 
-- (NSURLSessionDownloadTask *)downloadTaskForItem:(id<SODownloadItem>)item {
+- (NSURLSessionDownloadTask *)downloadTaskForItem:(id<SODownloadItemProtocol>)item {
     return self.tasks[[item.so_downloadURL absoluteString]];
 }
 
-- (void)removeTaskInfoForItem:(id<SODownloadItem>)item {
+- (void)removeTaskInfoForItem:(id<SODownloadItemProtocol>)item {
     [self.tasks removeObjectForKey:[item.so_downloadURL absoluteString]];
+    [self.downloadingArrayWarpper removeObject:item];
     --self.activeRequestCount;
 }
 
 /// 尝试开始更多下载，需要在同步队列中执行
 - (void)startNextTaskIfNecessary {
-    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
+    for (id<SODownloadItemProtocol>item in self.downloadArrayWarpper) {
         if ([self isActiveRequestCountBelowMaximumLimit]) {
             if (item.so_downloadState == SODownloadStateWait) {
                 [self startDownloadItem:item];
@@ -360,12 +395,12 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (NSString *)resumePathForItem:(id<SODownloadItem>)item {
+- (NSString *)resumePathForItem:(id<SODownloadItemProtocol>)item {
     NSString *tempFileName = [[self pathForDownloadURL:[item so_downloadURL]]stringByAppendingPathExtension:@"download"];
     return [self.downloaderPath stringByAppendingPathComponent:tempFileName];
 }
 
-- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
+- (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItemProtocol>)item {
     [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
 }
 
@@ -375,7 +410,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
  2 ----------- iOS 8、iOS 9、iOS 10
  4 ----------- iOS 11
  */
-- (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
+- (NSData *)resumeDataForItem:(id<SODownloadItemProtocol>)item {
     NSString *resumePath = [self resumePathForItem:item];
     if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
         NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
@@ -428,7 +463,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 @implementation SODownloader (DownloadNotify)
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState {
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadState:(SODownloadState)downloadState {
     if ([item respondsToSelector:@selector(setSo_downloadState:)]) {
         item.so_downloadState = downloadState;
     } else {
@@ -436,7 +471,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress {
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadProgress:(double)downloadProgress {
     if ([item respondsToSelector:@selector(setSo_downloadProgress:)]) {
         item.so_downloadProgress = downloadProgress;
     } else {
@@ -444,13 +479,13 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error {
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadError:(NSError *)error {
     if ([item respondsToSelector:@selector(setSo_downloadError:)]) {
         item.so_downloadError = error;
     }
 }
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed {
+- (void)notifyDownloadItem:(id<SODownloadItemProtocol>)item withDownloadSpeed:(NSInteger)downloadSpeed {
     if ([item respondsToSelector:@selector(setSo_downloadSpeed:)]) {
         item.so_downloadSpeed = downloadSpeed;
     }
@@ -461,15 +496,15 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 #pragma mark - Download Control
 @implementation SODownloader (DownloadControl)
 /// 下载
-- (void)downloadItem:(id<SODownloadItem>)item {
+- (void)downloadItem:(id<SODownloadItemProtocol>)item {
     [self downloadItem:item autoStartDownload:YES];
 }
 
-- (void)downloadItems:(NSArray<SODownloadItem>*)items {
+- (void)downloadItems:(NSArray<id<SODownloadItemProtocol>> *)items {
     [self downloadItems:items autoStartDownload:YES];
 }
 
-- (void)downloadItem:(id<SODownloadItem>)item autoStartDownload:(BOOL)autoStartDownload {
+- (void)downloadItem:(id<SODownloadItemProtocol>)item autoStartDownload:(BOOL)autoStartDownload {
     if ([self isControlDownloadFlowForItem:item]) {
         NSLog(@"SODownloader: %@ already in download flow!", item);
         return;
@@ -495,10 +530,10 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
-- (void)downloadItems:(NSArray<SODownloadItem> *)items autoStartDownload:(BOOL)autoStartDownload {
+- (void)downloadItems:(NSArray<id<SODownloadItemProtocol>> *)items autoStartDownload:(BOOL)autoStartDownload {
     dispatch_sync(self.synchronizationQueue, ^{
         NSMutableArray *itemsCanBeDownload = [[NSMutableArray alloc]initWithCapacity:items.count];
-        for (id<SODownloadItem>item in items) {
+        for (id<SODownloadItemProtocol>item in items) {
             if ([self isControlDownloadFlowForItem:item]) {
                 NSLog(@"SODownloader: %@ already in download flow!", item);
                 continue;
@@ -516,12 +551,12 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(self.downloadMutableArray.count, [itemsCanBeDownload count])];
         [self.downloadArrayWarpper insertObjects:itemsCanBeDownload atIndexes:indexSet];
         if (autoStartDownload) {
-            for (id<SODownloadItem> item in itemsCanBeDownload) {
+            for (id<SODownloadItemProtocol> item in itemsCanBeDownload) {
                 [self notifyDownloadItem:item withDownloadState:SODownloadStateWait];
             }
             [self startNextTaskIfNecessary];
         } else {
-            for (id<SODownloadItem> item in itemsCanBeDownload) {
+            for (id<SODownloadItemProtocol> item in itemsCanBeDownload) {
                 [self notifyDownloadItem:item withDownloadState:SODownloadStatePaused];
             }
         }
@@ -530,7 +565,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 #pragma mark - 暂停下载相关方法
 /// 暂停
-- (void)pauseItem:(id<SODownloadItem>)item {
+- (void)pauseItem:(id<SODownloadItemProtocol>)item {
     if (![self isControlDownloadFlowForItem:item]) {
         NSLog(@"SODownloader: can't pause a item not in control of SODownloader!");
         return;
@@ -548,12 +583,12 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)_pauseAll {
-    for (id<SODownloadItem>item in self.downloadArrayWarpper) {
+    for (id<SODownloadItemProtocol>item in self.downloadArrayWarpper) {
         [self _pauseItem:item];
     }
 }
 
-- (void)_pauseItem:(id<SODownloadItem>)item {
+- (void)_pauseItem:(id<SODownloadItemProtocol>)item {
     if (item.so_downloadState == SODownloadStateLoading || item.so_downloadState == SODownloadStateWait) {
         [self _pauseTaskForItem:item saveResumeData:YES];
         [self notifyDownloadItem:item withDownloadState:SODownloadStatePaused];
@@ -561,7 +596,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 #pragma mark 取消下载相关方法
-- (void)cancelItem:(id<SODownloadItem>)item {
+- (void)cancelItem:(id<SODownloadItemProtocol>)item {
     if (![self isControlDownloadFlowForItem:item]) {
         NSLog(@"SODownloader: can't cancel a item not in control of SODownloader!");
         return;
@@ -569,16 +604,16 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     [self _cancelItemSafely:item remove:YES];
 }
 
-- (void)_cancelItemSafely:(id<SODownloadItem>)item remove:(BOOL)remove {
+- (void)_cancelItemSafely:(id<SODownloadItemProtocol>)item remove:(BOOL)remove {
     dispatch_sync(self.synchronizationQueue, ^{
         [self _cancelItem:item remove:remove];
     });
 }
 
-- (void)cancelItems:(NSArray<SODownloadItem> *)items {
+- (void)cancelItems:(NSArray<id<SODownloadItemProtocol>> *)items {
     dispatch_sync(self.synchronizationQueue, ^{
         NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
-        for (id<SODownloadItem>item in items) {
+        for (id<SODownloadItemProtocol>item in items) {
             if ([self.downloadMutableArray containsObject:item]) {
                 [self _cancelItem:item remove:NO];
                 [indexSet addIndex:[self.downloadMutableArray indexOfObject:item]];
@@ -590,14 +625,14 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 - (void)cancenAll {
     dispatch_sync(self.synchronizationQueue, ^{
-        for (id<SODownloadItem>item in self.downloadMutableArray) {
+        for (id<SODownloadItemProtocol>item in self.downloadMutableArray) {
             [self _cancelItem:item remove:NO];
         }
         [self.downloadArrayWarpper removeObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self.downloadMutableArray count])]];
     });
 }
 
-- (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove {
+- (void)_cancelItem:(id<SODownloadItemProtocol>)item remove:(BOOL)remove {
     [self _pauseTaskForItem:item saveResumeData:NO];
     [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
     [self notifyDownloadItem:item withDownloadProgress:0];
@@ -607,7 +642,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 /// 继续
-- (void)resumeItem:(id<SODownloadItem>)item {
+- (void)resumeItem:(id<SODownloadItemProtocol>)item {
     if (![self isControlDownloadFlowForItem:item]) {
         NSLog(@"SODownloader: can't resume a item not in control of SODownloader!");
         return;
@@ -624,14 +659,14 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)resumeAll {
-    for (id<SODownloadItem>item in self.downloadMutableArray) {
+    for (id<SODownloadItemProtocol>item in self.downloadMutableArray) {
         [self resumeItem:item];
     }
 }
 
 - (void)removeAllCompletedItems {
     dispatch_sync(self.synchronizationQueue, ^{
-        for (id<SODownloadItem>item in self.completeMutableArray) {
+        for (id<SODownloadItemProtocol>item in self.completeMutableArray) {
             [self notifyDownloadItem:item withDownloadProgress:0];
             [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
         }
@@ -639,7 +674,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
-- (void)removeCompletedItem:(id<SODownloadItem>)item {
+- (void)removeCompletedItem:(id<SODownloadItemProtocol>)item {
     dispatch_sync(self.synchronizationQueue, ^{
         if ([self.completeMutableArray containsObject:item]) {
             [self.completeArrayWarpper removeObject:item];
@@ -649,10 +684,10 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     });
 }
 
-- (void)markItemsAsComplate:(NSArray<SODownloadItem> *)items {
+- (void)markItemsAsComplate:(NSArray<id<SODownloadItemProtocol>> *)items {
     dispatch_sync(self.synchronizationQueue, ^{
         NSMutableArray *itemsToMarkComplete = [[NSMutableArray alloc]initWithCapacity:items.count];
-        for (id<SODownloadItem>item in items) {
+        for (id<SODownloadItemProtocol>item in items) {
             if (![self isControlDownloadFlowForItem:item]) {
                 [self notifyDownloadItem:item withDownloadProgress:1];
                 [self notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
@@ -665,19 +700,19 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 /// 判断item是否在当前的downloader的控制下，用于条件判断
-- (BOOL)isControlDownloadFlowForItem:(id<SODownloadItem>)item {
+- (BOOL)isControlDownloadFlowForItem:(id<SODownloadItemProtocol>)item {
     return [self.downloadMutableArray containsObject:item] || [self.completeMutableArray containsObject:item];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     dispatch_sync(self.synchronizationQueue, ^{
-        for (id<SODownloadItem> item in self.downloadArray) {
+        for (id<SODownloadItemProtocol> item in self.downloadArray) {
             [self _pauseTaskForItem:item saveResumeData:YES];
         }
     });
 }
 
-- (void)_pauseTaskForItem:(id<SODownloadItem>)item saveResumeData:(BOOL)save {
+- (void)_pauseTaskForItem:(id<SODownloadItemProtocol>)item saveResumeData:(BOOL)save {
     if (item.so_downloadState == SODownloadStateLoading) {
         NSURLSessionDownloadTask *downloadTask = [self downloadTaskForItem:item];
         [downloadTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {

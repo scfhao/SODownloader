@@ -19,7 +19,7 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         // 创建下载器对象
-        downloader = [[SODownloader alloc]initWithIdentifier:@"music" timeoutInterval:20.0 completeBlock:^NSError *(SODownloader * _Nonnull downloader, id<SODownloadItem>  _Nonnull item, NSURL * _Nonnull location) {
+        downloader = [[SODownloader alloc]initWithIdentifier:@"music" timeoutInterval:20.0 completeBlock:^NSError *(SODownloader * _Nonnull downloader, id<SODownloadItemProtocol>  _Nonnull item, NSURL * _Nonnull location) {
             // 这个block每下载成功一个文件时被调用，这个block在后台线程中调用，不建议在这里做更新UI的操作
             // 你可以在这里对下载成功做特别的处理，例如：
             // 1. 把下载完成的 item 的信息存入数据库
@@ -56,15 +56,15 @@
         
         // 恢复已下载项目的状态，下面的代码仅作示例
         NSArray *downloadedArray = [SOSimulateDB complatedMusicArrayInDB];
-        [downloader markItemsAsComplate:(NSArray<SODownloadItem> *)downloadedArray];
+        [downloader markItemsAsComplate:(NSArray<id<SODownloadItemProtocol>> *)downloadedArray];
         
         // 恢复等待、下载中状态的项目，后面的参数传 YES 会使下载器自动继续下载上次程序退出时正在下载的项目
         NSArray *itemsDownloadImmediately = [SOSimulateDB downloadingMusicArrayInDB];
-        [downloader downloadItems:(NSArray<SODownloadItem> *)itemsDownloadImmediately autoStartDownload:YES];
+        [downloader downloadItems:(NSArray<id<SODownloadItemProtocol>> *)itemsDownloadImmediately autoStartDownload:YES];
         
         // 恢复程序上次运行时处于暂停状态的项目，后面的参数 NO 保证这些项目继续处于暂停状态
         NSArray *pausedItems = [SOSimulateDB pausedMusicArrayInDB];
-        [downloader downloadItems:(NSArray<SODownloadItem> *)pausedItems autoStartDownload:NO];
+        [downloader downloadItems:(NSArray<id<SODownloadItemProtocol>> *)pausedItems autoStartDownload:NO];
     });
     return downloader;
 }
