@@ -36,7 +36,7 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItemProtocol> item);
 
 /// 每个下载器都有一个唯一标识符，不同的下载器应使用不同的标识符
 @property (nonatomic, copy, readonly) NSString *downloaderIdentifier;
-/// 最大下载数
+/// 最大下载数, 一般不超过3个
 @property (nonatomic, assign) NSInteger maximumActiveDownloads;
 /// 总下载速率, 单位byte/s, 添加在 main runloop, 使用NSRunLoopCommonModes
 @property (nonatomic, assign) NSInteger totalSpeed;

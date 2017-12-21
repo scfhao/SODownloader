@@ -107,6 +107,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         self.speedTimer = [NSTimer so_timerWithTimeInterval:1.0f block:^(NSTimer *timer) {
             __strong __typeof(weakSelf)strongSelf = weakSelf;
             NSInteger speed = 0;
+            if (strongSelf.downloadingMutableArray.count == 0) return ;
             for (id<SODownloadItemProtocol> item in strongSelf.downloadingMutableArray) {
                 if ([item respondsToSelector:@selector(so_downloadSpeed)]) {
                     speed += item.so_downloadSpeed;
@@ -120,14 +121,15 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         self.completeBlock = completeBlock;
         self.downloaderPath = [NSTemporaryDirectory() stringByAppendingPathComponent:self.downloaderIdentifier];
         
+        _maximumActiveDownloads = 3;
+        _totalSpeed = 0;
+        
         self.tasks = [[NSMutableDictionary alloc]init];
         self.downloadMutableArray = [[NSMutableArray alloc]init];
         self.completeMutableArray = [[NSMutableArray alloc]init];
-        self.downloadingMutableArray = [[NSMutableArray alloc]init];
+        self.downloadingMutableArray = [NSMutableArray arrayWithCapacity:self.maximumActiveDownloads];
         
         [self createPath];
-        _maximumActiveDownloads = 3;
-        _totalSpeed = 0;
         
         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
     }
