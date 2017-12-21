@@ -12,7 +12,7 @@
 // 我用于测试的音乐文件个数
 #define TestMusicCount 42
 
-@interface SOMusic : NSObject<SODownloadItem>
+@interface SOMusic : NSObject<SODownloadItemProtocol>
 
 // 这个属性只是我用来区分我的音频对象的，你的模型对象中是不需要这个属性的。
 @property (assign, readonly, nonatomic) NSInteger index;

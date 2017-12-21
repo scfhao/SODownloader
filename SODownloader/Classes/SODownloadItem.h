@@ -12,12 +12,12 @@
  将自定义的模型对象用于SODownloader时，可以通过两种途径实现（二选一即可）：
  
  - 将需要下载的model类集成SODownloadItem类。
- - 将需要下载的model类实现SODownloadItem协议。
+ - 将需要下载的model类实现SODownloadItemProtocol协议。
  
- 继承SODownloadItem类或实现SODownloadItem协议的类即可用于下载。不管选择哪种形式，必须实现：
+ 继承SODownloadItem类或实现SODownloadItemProtocol协议的类即可用于下载。不管选择哪种形式，必须实现：
  - (NSURL *)downloadURL;
 
- 如果选择实现SODownloadItem协议而不继承SODownloadItem类时，必须同时为so_downloadProgress、so_downloadState属性合成setter、getter方法（自动或手动合成）
+ 如果选择实现SODownloadItemProtocol协议而不继承SODownloadItem类时，必须同时为so_downloadProgress、so_downloadState属性合成setter、getter方法（自动或手动合成）
  
  更进一步：为了能达到最佳效果，建议可下载模型实现下面的方法，（如果没有实现这两个方法，当有多个item代表相同的资源时，这多个item都可以添加到下载列表中，实现这两个方法后可以避免出现这种情况）：
  - (NSUInteger)hash
@@ -49,7 +49,7 @@ typedef NS_ENUM(NSUInteger, SODownloadState) {
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol SODownloadItem <NSObject>
+@protocol SODownloadItemProtocol <NSObject>
 
 @optional
 /// 下载进度，支持KVO
@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface SODownloadItem : NSObject<SODownloadItem>
+@interface SODownloadItem : NSObject<SODownloadItemProtocol>
 
 @end
 

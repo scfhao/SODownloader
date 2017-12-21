@@ -16,7 +16,7 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
 
 @interface SOMusicListViewController ()
 
-@property (strong, nonatomic) NSArray<SODownloadItem> *musicArray;
+@property (strong, nonatomic) NSArray<id<SODownloadItemProtocol>> *musicArray;
 
 @end
 
@@ -24,7 +24,7 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.musicArray = (NSArray<SODownloadItem> *)[SOMusic allMusicList];
+    self.musicArray = (NSArray<id<SODownloadItemProtocol>> *)[SOMusic allMusicList];
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
     
     [[SODownloader musicDownloader]addObserver:self forKeyPath:SODownloaderDownloadArrayObserveKeyPath options:NSKeyValueObservingOptionNew context:kDownloaderKVOContext];
