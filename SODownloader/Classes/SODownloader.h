@@ -38,6 +38,8 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItemProtocol> item);
 @property (nonatomic, copy, readonly) NSString *downloaderIdentifier;
 /// 最大下载数
 @property (nonatomic, assign) NSInteger maximumActiveDownloads;
+/// 总下载速率, 单位byte/s, 添加在 main runloop, 使用NSRunLoopCommonModes
+@property (nonatomic, assign) NSInteger totalSpeed;
 
 #pragma mark - 相关数组
 /**
@@ -54,6 +56,12 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItemProtocol> item);
  */
 @property (nonatomic, strong, readonly) NSArray *completeArray;
 
+/**
+ @brief 已下载项数组
+ @description 不可变数组，外部无法对此数组进行增、删、改
+ @see SODownloaderCompleteArrayObserveKeyPath 外部可通过 KVO 对此数组的内容变化进行观察
+ */
+@property (nonatomic, strong, readonly) NSArray *downloadingArray;
 #pragma mark - 创建/初始化
 /**
  为该identifier创建一个downloader。
@@ -161,12 +169,14 @@ typedef BOOL(^SODownloadFilter_t)(id<SODownloadItemProtocol> item);
 
 #pragma mark - KVO
 /**
- 要对下载队列进行监控，最佳的方式就是使用 KVO 了，SODownloader 提供了两个对下载队列进行监控的 KeyPath，其中，观察`SODownloaderDownloadArrayObserveKeyPath`可以对 SODownloader 对象的 downloadArray 代表的数组进行监控；观察`SODownloaderCompleteArrayObserveKeyPath`可以对 SODownloader 对象的 completeArray 代表的数组进行监控。可以参考 SODownloadExample 中的已下载界面 SODownloadViewController 中对此的用法。
+ 要对下载队列进行监控，最佳的方式就是使用 KVO 了，SODownloader 提供了两个对下载队列进行监控的 KeyPath，其中，观察`SODownloaderDownloadArrayObserveKeyPath`可以对 SODownloader 对象的 downloadArray 代表的数组进行监控；观察`SODownloaderCompleteArrayObserveKeyPath`可以对 SODownloader 对象的 completeArray 代表的数组进行监控；观察`SODownloaderDownloadingArrayObserveKeyPath`可以对 SODownloader 对象的 downloadingArray 代表的数组进行监控；可以参考 SODownloadExample 中的已下载界面 SODownloadViewController 中对此的用法。
  */
 /// SODownloader 对象的 downloadArray 属性对应的 Observe KeyPath
 FOUNDATION_EXPORT NSString * const SODownloaderDownloadArrayObserveKeyPath;
 /// SODownloader 对象的 completeArray 属性对应的 Observe KeyPath
 FOUNDATION_EXPORT NSString * const SODownloaderCompleteArrayObserveKeyPath;
+/// SODownloader 对象的 downloadingArray 属性对应的 Observe KeyPath
+FOUNDATION_EXPORT NSString * const SODownloaderDownloadingArrayObserveKeyPath;
 
 #pragma mark - Notifications
 /// 当设备剩余空间不足、无法继续下载时，SODownloader 会暂停全部下载并发送此通知。

@@ -8,6 +8,7 @@
 
 #import "SODownloader.h"
 #import "AFNetworking.h"
+#import "NSTimer+SODownloader.h"
 #import "SODownloadResponseSerializer.h"
 #import <CommonCrypto/CommonDigest.h>
 
@@ -15,6 +16,7 @@ NSString * const SODownloaderNoDiskSpaceNotification = @"SODownloaderNoDiskSpace
 
 NSString * const SODownloaderDownloadArrayObserveKeyPath = @"downloadMutableArray";
 NSString * const SODownloaderCompleteArrayObserveKeyPath = @"completeMutableArray";
+NSString * const SODownloaderDownloadingArrayObserveKeyPath = @"downloadingMutableArray";
 
 static NSString * SODownloadProgressUserInfoStartTimeKey = @"SODownloadProgressUserInfoStartTime";
 static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgressUserInfoStartOffsetKey";
@@ -53,13 +55,18 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 @property (nonatomic, strong) NSMutableDictionary *tasks;
 @property (nonatomic, strong, readonly) NSMutableArray *downloadArrayWarpper;
 @property (nonatomic, strong, readonly) NSMutableArray *completeArrayWarpper;
+@property (nonatomic, strong, readonly) NSMutableArray *downloadingArrayWarpper;
 /// 下载项数组(包含等待中、下载中、暂停状态的下载项目)
 @property (nonatomic, strong) NSMutableArray *downloadMutableArray;
 /// 已下载项数组
 @property (nonatomic, strong) NSMutableArray *completeMutableArray;
+/// 下载中项数组
+@property (nonatomic, strong) NSMutableArray *downloadingMutableArray;
 
 @property (nonatomic, strong) AFHTTPSessionManager *sessionManager;
 @property (nonatomic, strong) dispatch_queue_t synchronizationQueue;
+
+@property (nonatomic, strong) NSTimer *speedTimer;
 
 // paths
 @property (nonatomic, strong) NSString *downloaderPath;
@@ -95,6 +102,19 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         
         self.sessionManager = [[AFHTTPSessionManager alloc]initWithSessionConfiguration:sessionConfiguration];
         self.sessionManager.responseSerializer = [SODownloadResponseSerializer serializer];
+      
+        __weak __typeof(self)weakSelf = self;
+        self.speedTimer = [NSTimer so_timerWithTimeInterval:1.0f block:^(NSTimer *timer) {
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            NSInteger speed = 0;
+            for (id<SODownloadItemProtocol> item in strongSelf.downloadingMutableArray) {
+                if ([item respondsToSelector:@selector(so_downloadSpeed)]) {
+                    speed += item.so_downloadSpeed;
+                }
+            }
+            strongSelf.totalSpeed = MAX(0, speed);
+        } repeats:YES];
+        [[NSRunLoop mainRunLoop] addTimer:self.speedTimer forMode:NSRunLoopCommonModes];
 
         self.downloaderIdentifier = identifier;
         self.completeBlock = completeBlock;
@@ -103,9 +123,11 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         self.tasks = [[NSMutableDictionary alloc]init];
         self.downloadMutableArray = [[NSMutableArray alloc]init];
         self.completeMutableArray = [[NSMutableArray alloc]init];
+        self.downloadingMutableArray = [[NSMutableArray alloc]init];
         
         [self createPath];
         _maximumActiveDownloads = 3;
+        _totalSpeed = 0;
         
         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
     }
@@ -113,6 +135,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)dealloc {
+    [self.speedTimer invalidate];
     [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
 }
 
@@ -124,12 +147,20 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     return [self mutableArrayValueForKey:SODownloaderCompleteArrayObserveKeyPath];
 }
 
+- (NSMutableArray *)downloadingArrayWarpper {
+  return [self mutableArrayValueForKey:SODownloaderDownloadingArrayObserveKeyPath];
+}
+
 - (NSArray *)downloadArray {
     return [self.downloadMutableArray copy];
 }
 
 - (NSArray *)completeArray {
     return [self.completeMutableArray copy];
+}
+
+- (NSArray *)downloadingArray {
+  return [self.downloadingMutableArray copy];
 }
 
 - (void)setAllowsCellularAccess:(BOOL)allowsCellularAccess {
@@ -314,6 +345,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 - (void)startDownloadTask:(NSURLSessionDownloadTask *)downloadTask forItem:(id<SODownloadItemProtocol>)item {
     self.tasks[[item.so_downloadURL absoluteString]] = downloadTask;
     [downloadTask resume];
+    [self.downloadingArrayWarpper addObject:item];
     ++self.activeRequestCount;
 }
 
@@ -323,6 +355,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 - (void)removeTaskInfoForItem:(id<SODownloadItemProtocol>)item {
     [self.tasks removeObjectForKey:[item.so_downloadURL absoluteString]];
+    [self.downloadingArrayWarpper removeObject:item];
     --self.activeRequestCount;
 }
 
