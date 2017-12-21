@@ -13,6 +13,7 @@
 #import "SODownloader+MusicDownloader.h"
 
 static void * kDownloaderKVOContext = &kDownloaderKVOContext;
+static void * kDownloaderSpeedKVOContext = &kDownloaderSpeedKVOContext;
 
 @interface SOMusicListViewController ()
 
@@ -29,6 +30,7 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
     
     [[SODownloader musicDownloader]addObserver:self forKeyPath:SODownloaderDownloadArrayObserveKeyPath options:NSKeyValueObservingOptionNew context:kDownloaderKVOContext];
     [[SODownloader musicDownloader]addObserver:self forKeyPath:SODownloaderCompleteArrayObserveKeyPath options:NSKeyValueObservingOptionNew context:kDownloaderKVOContext];
+    [[SODownloader musicDownloader]addObserver:self forKeyPath:@__STRING(totalSpeed) options:NSKeyValueObservingOptionNew context:kDownloaderSpeedKVOContext];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -42,6 +44,7 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
     [self.tableView.visibleCells makeObjectsPerformSelector:@selector(configureMusic:) withObject:nil];
     [[SODownloader musicDownloader]removeObserver:self forKeyPath:SODownloaderDownloadArrayObserveKeyPath];
     [[SODownloader musicDownloader]removeObserver:self forKeyPath:SODownloaderCompleteArrayObserveKeyPath];
+    [[SODownloader musicDownloader]removeObserver:self forKeyPath:@__STRING(totalSpeed)];
 }
 
 #pragma mark - Table view data source
@@ -154,6 +157,17 @@ static void * kDownloaderKVOContext = &kDownloaderKVOContext;
         NSString *list = [keyPath isEqualToString:SODownloaderDownloadArrayObserveKeyPath] ? @"下载队列" : @"已下载队列";
         NSString *type = kind == NSKeyValueChangeInsertion ? @"插入" : @"删除";
         SODebugLog(@"%@ %@ %@", list, type, news);
+    } else if (context == kDownloaderSpeedKVOContext) {
+        NSInteger speed = [change[NSKeyValueChangeNewKey] integerValue];
+        NSString *str = nil;
+        if (speed < 1024) {
+            str = [NSString stringWithFormat:@"%li Byte/s", speed];
+        } else if (speed < 1024 * 1024) {
+            str = [NSString stringWithFormat:@"%li kb/s", speed / 1024];
+        } else {
+            str = [NSString stringWithFormat:@"%.1f mb/s", speed / 1024.0 / 1024];
+        }
+        SODebugLog(@"总下载速率: %@", str);
     } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
