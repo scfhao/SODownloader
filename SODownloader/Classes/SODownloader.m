@@ -686,6 +686,15 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
             }
         }];
     }
+    if (!save) {
+        NSError *error = nil;
+        BOOL removed = [[NSFileManager defaultManager]removeItemAtPath:[self resumePathForItem:item] error:&error];
+#ifdef DEBUG
+        if (!removed) {
+            NSLog(@"[SODownloader]: remove resume data fail: %@", error);
+        }
+#endif
+    }
 }
 
 @end
