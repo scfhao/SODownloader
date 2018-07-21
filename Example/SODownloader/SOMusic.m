@@ -86,7 +86,7 @@
         default:
             break;
     }
-    SOCustomDebugLog(@"<Progress>", @"%@", @(self.so_downloadProgress).stringValue);
+    SOCustomDebugLog(@"<Progress>", @"%@", @(self.so_downloadProgress.fractionCompleted).stringValue);
     [SOSimulateDB save:self];
 }
 

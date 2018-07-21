@@ -17,7 +17,7 @@ static void * kSpeedContext = &kSpeedContext;
 - (void)configureMusic:(SOMusic *)music {
     self.titleLabel.text = [music description];
     [self updateState:music.so_downloadState];
-    self.progressView.progress = music.so_downloadProgress;
+    self.progressView.progress = music.so_downloadProgress.fractionCompleted;
     self.music = music;
 //    self.backgroundColor = [UIColor whiteColor];
 }
@@ -55,15 +55,15 @@ static void * kSpeedContext = &kSpeedContext;
  */
 - (void)setMusic:(SOMusic *)music {
     if (_music) {
-        [_music removeObserver:self forKeyPath:@__STRING(so_downloadState)];
-        [_music removeObserver:self forKeyPath:@__STRING(so_downloadProgress)];
-        [_music removeObserver:self forKeyPath:@__STRING(so_downloadSpeed)];
+        [_music removeObserver:self forKeyPath:SODownloadItemStateObserveKeyPath];
+        [_music removeObserver:self forKeyPath:SODownloadItemProgressObserveKeyPath];
+        [_music removeObserver:self forKeyPath:SODownloadItemSpeedObserveKeyPath];
     }
     _music = music;
     if (_music) {
-        [_music addObserver:self forKeyPath:@__STRING(so_downloadState) options:NSKeyValueObservingOptionNew context:kStateContext];
-        [_music addObserver:self forKeyPath:@__STRING(so_downloadProgress) options:NSKeyValueObservingOptionNew context:kProgressContext];
-        [_music addObserver:self forKeyPath:@__STRING(so_downloadSpeed) options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:kSpeedContext];
+        [_music addObserver:self forKeyPath:SODownloadItemStateObserveKeyPath options:NSKeyValueObservingOptionNew context:kStateContext];
+        [_music addObserver:self forKeyPath:SODownloadItemProgressObserveKeyPath options:NSKeyValueObservingOptionNew context:kProgressContext];
+        [_music addObserver:self forKeyPath:SODownloadItemSpeedObserveKeyPath options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:kSpeedContext];
     }
 }
 

@@ -52,11 +52,17 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol SODownloadItem <NSObject>
 
 @optional
-/// 下载进度，支持KVO
-@property (assign, nonatomic) double so_downloadProgress;
+/**
+ 下载进度，支持KVO，可直接使用 SODownloadItemProgressObserveKeyPath 作为 KVO 的 key path。
+ 注意：较老版本的 SODownloader 中使用了 double 类型定义 so_downloadProgress，由于 double 类型可携带信息较少，而在 Cocoa 平台中有更适合描述进度的类型 NSProgress，故将此类型升级为 NSProgress，随之带来的好处是开始一个下载任务后，通过 SODownloader 可以直接获取到下载文件的大小，如下：
+ @code
+ unsigned long long fileSize = self.so_downloadProgress.totalUnitCount; // 所下载文件的总大小，单位为字节。
+ @endcode
+ */
+@property (strong, nonatomic) NSProgress *so_downloadProgress;
 /// 下载状态，支持KVO，该属性的值由 SODownloader 维护，调用 SODownloader 类的下载相关方法可以使该属性值改变，不要自己修改这个属性的值。
 @property (assign, nonatomic) SODownloadState so_downloadState;
-/// 下载速度，单位是字节/秒
+/// 下载速度，支持KVO，单位是字节/秒
 @property (assign, nonatomic) NSUInteger so_downloadSpeed;
 /// 当下载失败时，此属性保存失败错误对象
 @property (strong, nonatomic, nullable) NSError *so_downloadError;
@@ -72,3 +78,13 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+/**
+ SODownloadItem 支持 KVO 的 key path。
+ */
+/// 下载进度 KVO Key Path
+FOUNDATION_EXPORT NSString * const SODownloadItemProgressObserveKeyPath;
+/// 下载状态 KVO Key Path
+FOUNDATION_EXPORT NSString * const SODownloadItemStateObserveKeyPath;
+/// 下载速度 KVO Key Path
+FOUNDATION_EXPORT NSString * const SODownloadItemSpeedObserveKeyPath;

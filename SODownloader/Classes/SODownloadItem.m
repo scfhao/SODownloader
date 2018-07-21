@@ -8,8 +8,12 @@
 
 #import "SODownloadItem.h"
 
+NSString * const SODownloadItemProgressObserveKeyPath = @"so_downloadProgress.fractionCompleted";
+NSString * const SODownloadItemStateObserveKeyPath = @"so_downloadState";
+NSString * const SODownloadItemSpeedObserveKeyPath = @"so_downloadSpeed";
+
 @implementation SODownloadItem
-@synthesize so_downloadState, so_downloadProgress;
+@synthesize so_downloadState, so_downloadProgress, so_downloadSpeed, so_downloadError;
 
 - (NSURL *)so_downloadURL {
     NSAssert(NO, @"[SODownloader]:Your download item class must implements -(NSURL *)downloadURL method declare in protocol SODownloadItem");

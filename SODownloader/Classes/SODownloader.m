@@ -29,7 +29,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 @interface SODownloader (DownloadNotify)
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress;
 - (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadState:(SODownloadState)downloadState;
 - (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadSpeed:(NSInteger)downloadSpeed;
 - (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error;
@@ -242,7 +241,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         NSString *destinationPath = [weakSelf.downloaderPath stringByAppendingPathComponent:fileName];
         return [NSURL fileURLWithPath:destinationPath];
     };
-    // 创建task
+    // TODO: 下载进度变化回调，此block将被移除
     void (^progressBlock)(NSProgress *downloadProgress) = ^(NSProgress *downloadProgress) {
         __strong __typeof__(weakSelf) strongSelf = weakSelf;
         NSDictionary *progressInfo = downloadProgress.userInfo;
@@ -257,15 +256,17 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
             [downloadProgress setUserInfoObject:@(CFAbsoluteTimeGetCurrent()) forKey:SODownloadProgressUserInfoStartTimeKey];
             [downloadProgress setUserInfoObject:@(downloadProgress.completedUnitCount) forKey:SODownloadProgressUserInfoStartOffsetKey];
         }
-        [strongSelf notifyDownloadItem:item withDownloadProgress:downloadProgress.fractionCompleted];
     };
+    // 创建task
     NSData *resumeData = [self resumeDataForItem:item];
     if (resumeData) {
         downloadTask = [self.sessionManager downloadTaskWithResumeData:resumeData progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
     } else {
         downloadTask = [self.sessionManager downloadTaskWithRequest:request progress:progressBlock destination:destinationBlock completionHandler:completeBlock];
     }
+    item.so_downloadProgress = [self.sessionManager downloadProgressForTask:downloadTask];
     [self startDownloadTask:downloadTask forItem:item];
+    
     if (taskId != UIBackgroundTaskInvalid) {
         [application endBackgroundTask:taskId];
         taskId = UIBackgroundTaskInvalid;
@@ -436,14 +437,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     }
 }
 
-- (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadProgress:(double)downloadProgress {
-    if ([item respondsToSelector:@selector(setSo_downloadProgress:)]) {
-        item.so_downloadProgress = downloadProgress;
-    } else {
-        NSLog(@"下载模型必须实现setDownloadProgress:才能获取到正确的下载进度！");
-    }
-}
-
 - (void)notifyDownloadItem:(id<SODownloadItem>)item withDownloadError:(NSError *)error {
     if ([item respondsToSelector:@selector(setSo_downloadError:)]) {
         item.so_downloadError = error;
@@ -600,7 +593,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 - (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove {
     [self _pauseTaskForItem:item saveResumeData:NO];
     [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
-    [self notifyDownloadItem:item withDownloadProgress:0];
+    item.so_downloadProgress.completedUnitCount = 0;
     if (remove && [self.downloadMutableArray count]) {
         [self.downloadArrayWarpper removeObject:item];
     }
@@ -632,7 +625,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 - (void)removeAllCompletedItems {
     dispatch_sync(self.synchronizationQueue, ^{
         for (id<SODownloadItem>item in self.completeMutableArray) {
-            [self notifyDownloadItem:item withDownloadProgress:0];
+            item.so_downloadProgress.completedUnitCount = 0;
             [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
         }
         [self.completeArrayWarpper removeObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self.completeMutableArray count])]];
@@ -643,7 +636,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     dispatch_sync(self.synchronizationQueue, ^{
         if ([self.completeMutableArray containsObject:item]) {
             [self.completeArrayWarpper removeObject:item];
-            [self notifyDownloadItem:item withDownloadProgress:0];
+            item.so_downloadProgress.completedUnitCount = 0;
             [self notifyDownloadItem:item withDownloadState:SODownloadStateNormal];
         }
     });
@@ -654,7 +647,10 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         NSMutableArray *itemsToMarkComplete = [[NSMutableArray alloc]initWithCapacity:items.count];
         for (id<SODownloadItem>item in items) {
             if (![self isControlDownloadFlowForItem:item]) {
-                [self notifyDownloadItem:item withDownloadProgress:1];
+                NSProgress *progress = [[NSProgress alloc] initWithParent:nil userInfo:nil];
+                progress.totalUnitCount = 1;
+                progress.completedUnitCount = 1;
+                item.so_downloadProgress = progress;
                 [self notifyDownloadItem:item withDownloadState:SODownloadStateComplete];
                 [itemsToMarkComplete addObject:item];
             }
