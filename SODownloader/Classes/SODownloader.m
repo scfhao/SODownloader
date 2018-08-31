@@ -376,7 +376,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
-    [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
+    [resumeData writeToFile:[self resumePathForItem:item] atomically:NO];
 }
 
 /*

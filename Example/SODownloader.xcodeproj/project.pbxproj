@@ -317,7 +317,7 @@
 				ORGANIZATIONNAME = scfhao;
 				TargetAttributes = {
 					6003F589195388D20070C39A = {
-						DevelopmentTeam = 5N5785R8FU;
+						DevelopmentTeam = KJN5GDHP84;
 					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
@@ -610,7 +610,7 @@
 			baseConfigurationReference = AFBD5A4520E2B067F40DBF99 /* Pods-SODownloader_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 5N5785R8FU;
+				DEVELOPMENT_TEAM = KJN5GDHP84;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SODownloader/SODownloader-Prefix.pch";
 				INFOPLIST_FILE = "SODownloader/SODownloader-Info.plist";
@@ -626,7 +626,7 @@
 			baseConfigurationReference = CD7D56A8863E003A78B0EF48 /* Pods-SODownloader_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 5N5785R8FU;
+				DEVELOPMENT_TEAM = KJN5GDHP84;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SODownloader/SODownloader-Prefix.pch";
 				INFOPLIST_FILE = "SODownloader/SODownloader-Info.plist";
