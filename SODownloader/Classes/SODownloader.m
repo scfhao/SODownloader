@@ -379,32 +379,39 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 - (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
     NSString *resumePath = [self resumePathForItem:item];
     if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
-        NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
-        NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
-        NSString *tempPath = nil;
-        switch (resumeInfoVersion) {
-            case 1:
-                tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
-                break;
-            default:
-            {
-                NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
-                if (tempFileName) {
-                    tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
-                } else {
-                    NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
-                }
-            }
-                break;
-        }
-        if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
+        if (@available(iOS 12, *)) {
             NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
             [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
             return resumeData;
         } else {
+            NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
+            NSLog(@"resumeDictionary: %@", resumeInfo);
+            NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
+            NSString *tempPath = nil;
+            switch (resumeInfoVersion) {
+                case 1:
+                    tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
+                    break;
+                default:
+                {
+                    NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
+                    if (tempFileName) {
+                        tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
+                    } else {
+                        NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
+                    }
+                }
+                    break;
+            }
+            if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
+                NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
+                [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
+                return resumeData;
+            } else {
 #ifdef DEBUG
-            NSLog(@"没有找到文件：%@", tempPath);
+                NSLog(@"没有找到文件：%@", tempPath);
 #endif
+            }
         }
     } else {
 #ifdef DEBUG
