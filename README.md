@@ -22,6 +22,8 @@ it, simply add the following line to your Podfile:
 pod "SODownloader"
 ```
 
+GitHub 上的代码为开发中的最新代码，CocoaPods 发布的代码有点老，新功能稳定后会在 CocoaPods 发布。
+
 ## Usage
 
 使用方法参考[Wiki](https://github.com/scfhao/SODownloader/wiki)，如果 SODownloader 对你有所帮助，别忘了点击本项目右上角的 Star！

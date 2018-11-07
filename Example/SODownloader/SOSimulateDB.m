@@ -11,9 +11,13 @@
 
 @interface SOSimulateDB ()
 
-@property (copy, nonatomic) NSMutableIndexSet *downloadingIndexSet;
-@property (copy, nonatomic) NSMutableIndexSet *pausedIndexSet;
-@property (copy, nonatomic) NSMutableIndexSet *complatedIndexSet;
+//@property (copy, nonatomic) NSMutableIndexSet *downloadingIndexSet;
+//@property (copy, nonatomic) NSMutableIndexSet *pausedIndexSet;
+//@property (copy, nonatomic) NSMutableIndexSet *complatedIndexSet;
+
+@property (strong, nonatomic) NSMutableArray *downloadingArray;
+@property (strong, nonatomic) NSMutableArray *pausedArray;
+@property (strong, nonatomic) NSMutableArray *complatedArray;
 
 @end
 
@@ -40,9 +44,13 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _downloadingIndexSet = [NSMutableIndexSet indexSet];
-        _pausedIndexSet = [NSMutableIndexSet indexSet];
-        _complatedIndexSet = [NSMutableIndexSet indexSet];
+//        _downloadingIndexSet = [NSMutableIndexSet indexSet];
+//        _pausedIndexSet = [NSMutableIndexSet indexSet];
+//        _complatedIndexSet = [NSMutableIndexSet indexSet];
+        
+        _downloadingArray = [[NSMutableArray alloc]init];
+        _pausedArray = [[NSMutableArray alloc]init];
+        _complatedArray = [[NSMutableArray alloc]init];
     }
     return self;
 }
@@ -50,17 +58,24 @@
 - (instancetype)initWithCoder:(NSCoder *)coder {
     self = [super init];
     if (self) {
-        _downloadingIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(downloadingIndexSet))];
-        _pausedIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(pausedIndexSet))];
-        _complatedIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(complatedIndexSet))];
+//        _downloadingIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(downloadingIndexSet))];
+//        _pausedIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(pausedIndexSet))];
+//        _complatedIndexSet = [coder decodeObjectOfClass:[NSMutableIndexSet class] forKey:NSStringFromSelector(@selector(complatedIndexSet))];
+        
+        _downloadingArray = [coder decodeObjectForKey:NSStringFromSelector(@selector(downloadingArray))];
+        _pausedArray = [coder decodeObjectForKey:NSStringFromSelector(@selector(pausedArray))];
+        _complatedArray = [coder decodeObjectForKey:NSStringFromSelector(@selector(complatedArray))];
     }
     return self;
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
-    [coder encodeObject:self.downloadingIndexSet forKey:NSStringFromSelector(@selector(downloadingIndexSet))];
-    [coder encodeObject:self.pausedIndexSet forKey:NSStringFromSelector(@selector(pausedIndexSet))];
-    [coder encodeObject:self.complatedIndexSet forKey:NSStringFromSelector(@selector(complatedIndexSet))];
+//    [coder encodeObject:self.downloadingIndexSet forKey:NSStringFromSelector(@selector(downloadingIndexSet))];
+//    [coder encodeObject:self.pausedIndexSet forKey:NSStringFromSelector(@selector(pausedIndexSet))];
+//    [coder encodeObject:self.complatedIndexSet forKey:NSStringFromSelector(@selector(complatedIndexSet))];
+    [coder encodeObject:self.downloadingArray forKey:NSStringFromSelector(@selector(downloadingArray))];
+    [coder encodeObject:self.pausedArray forKey:NSStringFromSelector(@selector(pausedArray))];
+    [coder encodeObject:self.complatedArray forKey:NSStringFromSelector(@selector(complatedArray))];
 }
 
 // 这个方法用于保存
@@ -73,24 +88,36 @@
     switch (music.so_downloadState) {
         case SODownloadStateWait:
         case SODownloadStateLoading:
-            [self.downloadingIndexSet addIndex:music.index];
-            [self.pausedIndexSet removeIndex:music.index];
-            [self.complatedIndexSet removeIndex:music.index];
+//            [self.downloadingIndexSet addIndex:music.index];
+//            [self.pausedIndexSet removeIndex:music.index];
+//            [self.complatedIndexSet removeIndex:music.index];
+            [self.downloadingArray addObject:music];
+            [self.pausedArray removeObject:music];
+            [self.complatedArray removeObject:music];
             break;
         case SODownloadStatePaused:
-            [self.downloadingIndexSet removeIndex:music.index];
-            [self.pausedIndexSet addIndex:music.index];
-            [self.complatedIndexSet removeIndex:music.index];
+//            [self.downloadingIndexSet removeIndex:music.index];
+//            [self.pausedIndexSet addIndex:music.index];
+//            [self.complatedIndexSet removeIndex:music.index];
+            [self.downloadingArray removeObject:music];
+            [self.pausedArray addObject:music];
+            [self.complatedArray removeObject:music];
             break;
         case SODownloadStateComplete:
-            [self.downloadingIndexSet removeIndex:music.index];
-            [self.pausedIndexSet removeIndex:music.index];
-            [self.complatedIndexSet addIndex:music.index];
+//            [self.downloadingIndexSet removeIndex:music.index];
+//            [self.pausedIndexSet removeIndex:music.index];
+//            [self.complatedIndexSet addIndex:music.index];
+            [self.downloadingArray removeObject:music];
+            [self.pausedArray removeObject:music];
+            [self.complatedArray addObject:music];
             break;
         case SODownloadStateNormal:
-            [self.downloadingIndexSet removeIndex:music.index];
-            [self.pausedIndexSet removeIndex:music.index];
-            [self.complatedIndexSet removeIndex:music.index];
+//            [self.downloadingIndexSet removeIndex:music.index];
+//            [self.pausedIndexSet removeIndex:music.index];
+//            [self.complatedIndexSet removeIndex:music.index];
+            [self.downloadingArray removeObject:music];
+            [self.pausedArray removeObject:music];
+            [self.complatedArray removeObject:music];
         default:
             break;
     }
@@ -99,29 +126,17 @@
 /// 获取出于下载中状态的音乐
 + (NSArray *)downloadingMusicArrayInDB {
     SOSimulateDB *db = [self sharedDB];
-    NSMutableArray *array = [NSMutableArray arrayWithCapacity:db.downloadingIndexSet.count];
-    [db.downloadingIndexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [array addObject:[[SOMusic alloc]initWithIndex:idx]];
-    }];
-    return [array copy];
+    return [db.downloadingArray copy];
 }
 
 + (NSArray *)pausedMusicArrayInDB {
     SOSimulateDB *db = [self sharedDB];
-    NSMutableArray *array = [NSMutableArray arrayWithCapacity:db.pausedIndexSet.count];
-    [db.pausedIndexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [array addObject:[[SOMusic alloc]initWithIndex:idx]];
-    }];
-    return [array copy];
+    return [db.pausedArray copy];
 }
 
 + (NSArray *)complatedMusicArrayInDB {
     SOSimulateDB *db = [self sharedDB];
-    NSMutableArray *array = [NSMutableArray arrayWithCapacity:db.complatedIndexSet.count];
-    [db.complatedIndexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
-        [array addObject:[[SOMusic alloc]initWithIndex:idx]];
-    }];
-    return [array copy];
+    return [db.complatedArray copy];
 }
 
 @end

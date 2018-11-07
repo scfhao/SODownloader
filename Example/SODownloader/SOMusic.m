@@ -124,4 +124,16 @@
     return [NSString stringWithFormat:@"[Music:%@]", @(self.index).stringValue];
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super init];
+    if (self) {
+        self.index = [coder decodeIntegerForKey:NSStringFromSelector(@selector(index))];
+    }
+    return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder {
+    [aCoder encodeInteger:self.index forKey:NSStringFromSelector(@selector(index))];
+}
+
 @end
