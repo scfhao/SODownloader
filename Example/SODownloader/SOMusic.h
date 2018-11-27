@@ -10,7 +10,7 @@
 #import "SODownloadItem.h"
 
 // 我用于测试的音乐文件个数
-#define TestMusicCount 42
+#define TestMusicCount 14
 
 @interface SOMusic : NSObject<SODownloadItem, NSCoding>
 
