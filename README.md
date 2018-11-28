@@ -28,18 +28,6 @@ GitHub 上的代码为开发中的最新代码，CocoaPods 发布的代码有点
 
 使用方法参考[Wiki](https://github.com/scfhao/SODownloader/wiki)，如果 SODownloader 对你有所帮助，别忘了点击本项目右上角的 Star！
 
-## Help
-
-目前 SODownloader Demo 中下载的文件托管在七牛云存储上，大家在运行 Demo 下载 Demo 中的 mp3 文件时会在七牛云存储上产生费用，所以请大家运行此 Demo 程序时，请先将 SOMusic.m 文件中的下载链接换成自己的链接进行测试。
-
-同时征集适合用于测试下载用的云存储方案，如果有合适的，请一定要推荐给我！满足以下的条件就行：
-
-1. 可以上传用于测试下载的文件上去。
-2. 要下载的文件的下载链接是固定不变的。
-3. 服务器支持 Content-Lenght 响应头。
-
-没有注册过七牛云存储的朋友，可以通过这个[链接](https://portal.qiniu.com/signup?code=3lc4jrwodxqoh)注册七牛云存储，完成实名认证后，我就可以有更多的免费流量用于供大家测试使用。
-
 ## Author
 
 scfhao@126.com
