@@ -107,12 +107,21 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         _maximumActiveDownloads = 3;
         
         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
+        
+        NSURLSessionDownloadTask *task;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(downloadData:)
+                                                     name:AFNetworkingTaskDidCompleteNotification
+                                                   object:task];
     }
     return self;
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
+    
+    NSURLSessionDownloadTask *task;
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:AFNetworkingTaskDidCompleteNotification object:task];
 }
 
 - (NSMutableArray *)downloadArrayWarpper {
@@ -367,7 +376,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 }
 
 - (void)saveResumeData:(NSData *)resumeData forItem:(id<SODownloadItem>)item {
-    [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
+    [resumeData writeToFile:[self resumePathForItem:item] atomically:NO];
 }
 
 /*
@@ -672,6 +681,8 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     return [self.downloadMutableArray containsObject:item] || [self.completeMutableArray containsObject:item];
 }
 
+#pragma mark - Notification
+
 - (void)applicationWillTerminate:(NSNotification *)notification {
     dispatch_sync(self.synchronizationQueue, ^{
         for (id<SODownloadItem> item in self.downloadArray) {
@@ -699,5 +710,28 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 #endif
     }
 }
+
+- (void)downloadData:(NSNotification *)notification {
+    
+    id object = notification.object;
+    
+    if ([object isKindOfClass:[NSURLSessionDownloadTask class]]) {
+        NSURLSessionDownloadTask *task = (NSURLSessionDownloadTask *)object;
+        NSString *url = [task.currentRequest.URL absoluteString];
+        
+        NSDictionary *userInfo = notification.userInfo;
+        NSError *error = [userInfo objectForKey:AFNetworkingTaskDidCompleteErrorKey];
+        if (error) {
+            // 下载中断： 强退/闪退/暂停 都会调用
+            NSData *resumeData = [error.userInfo objectForKey:@"NSURLSessionDownloadTaskResumeData"];
+            for (id<SODownloadItem> item in self.downloadArray) {
+                if ([item.so_downloadURL.absoluteString isEqualToString:url] ) {
+                    [self saveResumeData:resumeData forItem:item];
+                }
+            }
+        }
+    }
+}
+
 
 @end
