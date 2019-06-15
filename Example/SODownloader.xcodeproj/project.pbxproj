@@ -615,7 +615,7 @@
 				GCC_PREFIX_HEADER = "SODownloader/SODownloader-Prefix.pch";
 				INFOPLIST_FILE = "SODownloader/SODownloader-Info.plist";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.SODownloader-Dem";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.SODownloader-Deme";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -631,7 +631,7 @@
 				GCC_PREFIX_HEADER = "SODownloader/SODownloader-Prefix.pch";
 				INFOPLIST_FILE = "SODownloader/SODownloader-Info.plist";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.SODownloader-Dem";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.SODownloader-Deme";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

@@ -39,6 +39,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 
 - (void)_pauseAll;
 - (void)_cancelItem:(id<SODownloadItem>)item remove:(BOOL)remove;
+- (void)_pauseTaskForItem:(id<SODownloadItem>)item saveResumeData:(BOOL)save;
 
 @end
 
@@ -107,12 +108,14 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         _maximumActiveDownloads = 3;
         
         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationWillTerminate:) name:UIApplicationWillTerminateNotification object:nil];
+        [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
+    [[NSNotificationCenter defaultCenter]removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (NSMutableArray *)downloadArrayWarpper {
@@ -247,7 +250,7 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
         NSDictionary *progressInfo = downloadProgress.userInfo;
         NSNumber *startTimeValue = progressInfo[SODownloadProgressUserInfoStartTimeKey];
         NSNumber *startOffsetValue = progressInfo[SODownloadProgressUserInfoStartOffsetKey];
-        if (startTimeValue) {
+        if (startTimeValue && (NSNull *)startTimeValue != [NSNull null]) {
             CFAbsoluteTime startTime = [startTimeValue doubleValue];
             int64_t startOffset = [startOffsetValue longLongValue];
             NSInteger downloadSpeed = (NSInteger)((downloadProgress.completedUnitCount - startOffset) / (CFAbsoluteTimeGetCurrent() - startTime));
@@ -344,6 +347,22 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     return self.activeRequestCount < self.maximumActiveDownloads;
 }
 
+#pragma mark - Application Life Cycle
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    dispatch_sync(self.synchronizationQueue, ^{
+        for (id<SODownloadItem> item in self.downloadArray) {
+            [self _pauseTaskForItem:item saveResumeData:YES];
+        }
+    });
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    double systemVersion = [[UIDevice currentDevice].systemVersion doubleValue];
+    if (systemVersion >= 12.0) {
+        [[NSNotificationCenter defaultCenter]postNotificationName:UIApplicationDidEnterBackgroundNotification object:nil];
+    }
+}
+
 @end
 
 @implementation SODownloader (DownloadPath)
@@ -370,55 +389,73 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
     [resumeData writeToFile:[self resumePathForItem:item] atomically:YES];
 }
 
-/*
+/**
+ @brief 获取有效的 resumeData
+ @description 本方法中同时对 resumeData 字典中指向的已下载的临时文件进行了校验，如果存在 resumeData，但不存在临时文件，也相当于 resumeData 无效。
+ 
  NSURLSessionResumeInfoVersion 与 iOS 版本对应
  1 ----------- iOS 7
  2 ----------- iOS 8、iOS 9、iOS 10
  4 ----------- iOS 11
+ 
+ 不同系统版本中读取 resumeData 的方式也不同，如果在新系统中不能恢复断点下载，则可能是新系统中修改了 resumeData 的读取方式。
  */
 - (NSData *)resumeDataForItem:(id<SODownloadItem>)item {
     NSString *resumePath = [self resumePathForItem:item];
-    if ([[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
-        if (@available(iOS 12, *)) {
-            NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
-            [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
-            return resumeData;
+    if (![[NSFileManager defaultManager]fileExistsAtPath:resumePath]) {
+        return nil;
+    }
+    // 从系统保存的 resumeData 中读取 resumeInfo。
+    NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
+    NSDictionary *resumeInfo = nil;
+    if (@available(iOS 12, *)) {
+        // iOS 12以上系统读取 resumeData 的方式
+        NSError *decodeError = nil;
+        NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc]initForReadingFromData:resumeData error:&decodeError];
+        if (decodeError) {
+            NSLog(@"[SODownloader]: 读取 resumeData 失败1：%@", decodeError);
         } else {
-            NSDictionary *resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
-            NSLog(@"resumeDictionary: %@", resumeInfo);
-            NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
-            NSString *tempPath = nil;
-            switch (resumeInfoVersion) {
-                case 1:
-                    tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
-                    break;
-                default:
-                {
-                    NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
-                    if (tempFileName) {
-                        tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
-                    } else {
-                        NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
-                    }
-                }
-                    break;
-            }
-            if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
-                NSData *resumeData = [NSData dataWithContentsOfFile:resumePath];
-                [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
-                return resumeData;
-            } else {
-#ifdef DEBUG
-                NSLog(@"没有找到文件：%@", tempPath);
-#endif
+            // 虽然系统定义了常量 NSKeyedArchiveRootObjectKey（值为@"root"），但这里不能使用这个常量，只能用字面值@"NSKeyedArchiveRootObjectKey"，以后系统改用 NSKeyedArchiveRootObjectKey 常量也未可知。
+            resumeInfo = [unarchiver decodeTopLevelObjectOfClasses:[NSSet setWithObjects:[NSDictionary class], [NSData class], nil] forKey:@"NSKeyedArchiveRootObjectKey" error:&decodeError];
+            if (decodeError) {
+                NSLog(@"[SODownloader]: 读取 resumeData 失败2：%@", decodeError);
             }
         }
+        [unarchiver finishDecoding];
     } else {
-#ifdef DEBUG
-        NSLog(@"没有找到文件：%@", resumePath);
-#endif
+        // iOS 12以下系统中读取 resumeData 的方式，比较简单
+        resumeInfo = [NSDictionary dictionaryWithContentsOfFile:resumePath];
     }
-    return nil;
+#ifdef DEBUG
+    NSLog(@"resumeDictionary: %@", resumeInfo);
+#endif
+    [[NSFileManager defaultManager]removeItemAtPath:resumePath error:nil];
+    if (!resumeInfo) {
+        NSLog(@"不支持的 resumeData, 请前往 https://github.com/scfhao/SODownloader/issues 反馈");
+        return nil;
+    }
+    NSInteger resumeInfoVersion = [resumeInfo[@"NSURLSessionResumeInfoVersion"] integerValue];
+    NSString *tempPath = nil;
+    switch (resumeInfoVersion) {
+        case 1:
+            tempPath = resumeInfo[@"NSURLSessionResumeInfoLocalPath"];
+            break;
+        default:
+        {
+            NSString *tempFileName = resumeInfo[@"NSURLSessionResumeInfoTempFileName"];
+            if (tempFileName) {
+                tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
+            } else {
+                NSLog(@"不支持的 resumeInfoVersion %@, 请前往 https://github.com/scfhao/SODownloader/issues 反馈", @(resumeInfoVersion).stringValue);
+            }
+        }
+            break;
+    }
+    if (tempPath && [[NSFileManager defaultManager]fileExistsAtPath:tempPath]) {
+        return resumeData;
+    } else {
+        return nil;
+    }
 }
 
 - (NSString *)pathForDownloadURL:(NSURL *)url {
@@ -670,14 +707,6 @@ static NSString * SODownloadProgressUserInfoStartOffsetKey = @"SODownloadProgres
 /// 判断item是否在当前的downloader的控制下，用于条件判断
 - (BOOL)isControlDownloadFlowForItem:(id<SODownloadItem>)item {
     return [self.downloadMutableArray containsObject:item] || [self.completeMutableArray containsObject:item];
-}
-
-- (void)applicationWillTerminate:(NSNotification *)notification {
-    dispatch_sync(self.synchronizationQueue, ^{
-        for (id<SODownloadItem> item in self.downloadArray) {
-            [self _pauseTaskForItem:item saveResumeData:YES];
-        }
-    });
 }
 
 - (void)_pauseTaskForItem:(id<SODownloadItem>)item saveResumeData:(BOOL)save {

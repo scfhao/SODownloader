@@ -91,9 +91,14 @@
 }
 
 #pragma mark - SODownloadItem必须实现的方法
-/// 这个方法返回该模型对应的文件的下载地址，当前 Demo 中下载的文件都存放在七牛云存储中，七牛云存储给每位用户的免费下载流量是10G每月，请大家在运行Demo时手下留情，替换成自己的下载链接更好了。如果有适合测试下载的免费方案，也请通过邮件等方式推荐给 scfhao@126.com
+/// 这个方法返回该模型对应的文件的下载地址
 - (NSURL *)so_downloadURL {
-    return [NSURL URLWithString:[NSString stringWithFormat:@"http://120.79.0.26:8080/music/%@.mp3", @(self.index).stringValue]];
+    switch (self.index) {
+        case 0:     return [NSURL URLWithString:@"https://userfilecenter.oss-cn-hangzhou.aliyuncs.com/5c2dacce9bd1160017fb1dc9/ca018999ebed44f19482d74691da8118.mp4"];
+        case 1:     return [NSURL URLWithString:@"https://userfilecenter.oss-cn-hangzhou.aliyuncs.com/5c2e135419b90933783e4127/dc405321267046c1b1d2d6e9d187d0d7.mp4"];
+        case 2:     return [NSURL URLWithString:@"https://userfilecentertest.oss-cn-hangzhou.aliyuncs.com/5caeea8324aa9a000e937be7/8e6ee1b4c0db4f19b4dac4a585c6c35d.mp4"];
+        default:    return nil;
+    }
 }
 
 #pragma mark - SODownloadItem建议实现的方法

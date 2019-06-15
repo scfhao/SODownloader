@@ -7,6 +7,7 @@
 //  SOMusicListCell.{h, m}: 示例如果对下载进度进行监听并更新界面
 
 #import "SOMusicListCell.h"
+#import "SOLog.h"
 
 static void * kStateContext = &kStateContext;
 static void * kProgressContext = &kProgressContext;
@@ -74,7 +75,13 @@ static void * kSpeedContext = &kSpeedContext;
             [self updateState:newState];
         });
     } else if (context == kProgressContext) {
-        double newProgress = [change[NSKeyValueChangeNewKey]doubleValue];
+        NSNumber *newProgressNum = change[NSKeyValueChangeNewKey];
+        if (![newProgressNum isKindOfClass:[NSNumber class]]) {
+            NSLog(@"Progress Class: %@", NSStringFromClass([newProgressNum class]));
+            // 这里 newProgressNum 可能是 NSNull，向 NSNull 对象发送 doubleValue 会导致异常。
+            return;
+        }
+        double newProgress = [newProgressNum doubleValue];
         dispatch_async(dispatch_get_main_queue(), ^{
             self.progressView.progress = newProgress;
         });

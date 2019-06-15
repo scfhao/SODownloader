@@ -32,7 +32,10 @@ GitHub 上的代码为开发中的最新代码，CocoaPods 发布的代码有点
 
 scfhao@126.com
 
-> 邮件联系 scfhao 询问 SODownloader 的使用问题前，请先看完 [Wiki](https://github.com/scfhao/SODownloader/wiki) 中的内容。
+由于 scfhao 个人精力有限，且 SODownloader 尚有不完善之处，在使用 SODownloader 的过程中：
+
+* 如果遇到用法方面的问题，请尽量先从 [Wiki](https://github.com/scfhao/SODownloader/wiki) 中寻找答案。
+* 如果遇到已知的 bug，请创建[新 Issue](https://github.com/scfhao/SODownloader/issues/new)，并提出修正该 bug 可参考的网页链接，对于可以同时提供解决方案的，也可以直接提交 pull request。
 
 ## License
 
