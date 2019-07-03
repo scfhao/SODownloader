@@ -91,7 +91,9 @@
 //            [self.downloadingIndexSet addIndex:music.index];
 //            [self.pausedIndexSet removeIndex:music.index];
 //            [self.complatedIndexSet removeIndex:music.index];
-            [self.downloadingArray addObject:music];
+            if (![self.downloadingArray containsObject:music]) {
+                [self.downloadingArray addObject:music];
+            }
             [self.pausedArray removeObject:music];
             [self.complatedArray removeObject:music];
             break;
@@ -99,17 +101,21 @@
 //            [self.downloadingIndexSet removeIndex:music.index];
 //            [self.pausedIndexSet addIndex:music.index];
 //            [self.complatedIndexSet removeIndex:music.index];
+            if (![self.pausedArray containsObject:music]) {
+                 [self.pausedArray addObject:music];
+            }
             [self.downloadingArray removeObject:music];
-            [self.pausedArray addObject:music];
             [self.complatedArray removeObject:music];
             break;
         case SODownloadStateComplete:
 //            [self.downloadingIndexSet removeIndex:music.index];
 //            [self.pausedIndexSet removeIndex:music.index];
 //            [self.complatedIndexSet addIndex:music.index];
+            if (![self.complatedArray containsObject:music]) {
+                [self.complatedArray addObject:music];
+            }
             [self.downloadingArray removeObject:music];
             [self.pausedArray removeObject:music];
-            [self.complatedArray addObject:music];
             break;
         case SODownloadStateNormal:
 //            [self.downloadingIndexSet removeIndex:music.index];
